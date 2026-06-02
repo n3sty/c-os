@@ -41,6 +41,21 @@ export type SeedExpense = {
   amount: number;
 };
 
+export type SeedNotificationTarget = {
+  type: "client" | "proposal" | "invoice" | "expense";
+  id: number;
+};
+
+export type SeedNotification = {
+  id: string;
+  title: string;
+  description: string;
+  source: string;
+  accent: string;
+  time: string;
+  target: SeedNotificationTarget;
+};
+
 export const seedClients: SeedClient[] = [
   {
     id: 1,
@@ -175,6 +190,36 @@ export const seedExpenses: SeedExpense[] = [
     id: 4,
     description: "Bookkeeping handoff review",
     amount: 92.5,
+  },
+];
+
+export const seedNotifications: SeedNotification[] = [
+  {
+    id: "invoice-sent",
+    title: "Invoice marked sent",
+    description: "INV-2026-032 is ready for follow-up.",
+    source: "Invoices",
+    accent: "bg-blue-400",
+    time: "2h",
+    target: { type: "invoice", id: 2 },
+  },
+  {
+    id: "proposal-missing-document",
+    title: "Proposal needs a document",
+    description: "PROP-2026-002 has no document link yet.",
+    source: "Proposals",
+    accent: "bg-cyan-400",
+    time: "1d",
+    target: { type: "proposal", id: 2 },
+  },
+  {
+    id: "expense-review",
+    title: "Expense ready for review",
+    description: "Client workshop travel is included in export.",
+    source: "Expenses",
+    accent: "bg-emerald-400",
+    time: "3d",
+    target: { type: "expense", id: 2 },
   },
 ];
 

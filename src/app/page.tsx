@@ -81,8 +81,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
 
             <div className="px-2 py-3">
               {seedNotifications.map((notification) => {
-                const isActive =
-                  notification.id === selectedNotification?.id;
+                const isActive = notification.id === selectedNotification?.id;
 
                 return (
                   <Link
@@ -124,7 +123,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
             </div>
           </section>
 
-          <section className="min-w-0 overflow-hidden border-border/60 border-l">
+          <section className="min-w-0 h-full overflow-hidden border-border/60 border-l">
             {detailContext && selectedRecord ? (
               <DetailSurface
                 backHref="/"

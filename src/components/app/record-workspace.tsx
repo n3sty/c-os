@@ -439,13 +439,14 @@ export function DetailSurface({
   variant = "page",
 }: DetailSurfaceProps) {
   const recordPosition =
-    position ?? Math.max(records.findIndex((item) => item.id === record.id) + 1, 1);
+    position ??
+    Math.max(records.findIndex((item) => item.id === record.id) + 1, 1);
 
   return (
     <div
       className={cn(
         "grid min-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card",
-        variant === "panel" && "min-h-0 rounded-none bg-transparent",
+        variant === "panel" && "h-full min-h-0 rounded-none bg-transparent",
       )}
     >
       <DetailTopbar

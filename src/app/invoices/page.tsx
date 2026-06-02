@@ -1,89 +1,109 @@
 import { RiBillLine } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
-import { EntityPage } from "@/components/app/entity-page";
-import { Badge } from "@/components/ui/badge";
-import {
-  getClientById,
-  getInvoiceStatusBadgeVariant,
-  getProposalById,
-  seedInvoices,
-} from "@/lib/seed-data";
+import { RecordWorkspace } from "@/components/app/record-workspace";
+import { getClientById, seedInvoices } from "@/lib/seed-data";
+import { getWorkspaceRecords } from "@/lib/workspace-records";
 
-export default function InvoicesPage() {
+type InvoicesPageProps = {
+  searchParams: Promise<{
+    filter?: string | string[];
+    record?: string | string[];
+    sidebar?: string | string[];
+  }>;
+};
+
+function getQueryValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getYearFromNumber(value: string) {
+  return value.match(/\d{4}/)?.[0] ?? "Unknown year";
+}
+
+export default async function InvoicesPage({
+  searchParams,
+}: InvoicesPageProps) {
+  const query = await searchParams;
+  const selectedFilterGroup = getQueryValue(query.filter);
+  const selectedId = getQueryValue(query.record);
+  const sidebarState = getQueryValue(query.sidebar);
+  const openInvoices = seedInvoices.filter(
+    (invoice) =>
+      !["paid", "void"].includes(invoice.status) && !invoice.archived,
+  );
+  const paidInvoices = seedInvoices.filter(
+    (invoice) => invoice.status === "paid",
+  );
+  const overdueInvoices = seedInvoices.filter(
+    (invoice) => invoice.status === "overdue",
+  );
+  const archivedInvoices = seedInvoices.filter((invoice) => invoice.archived);
+  const records = getWorkspaceRecords("invoice");
+  const clientOptions = seedInvoices.reduce<Record<string, number>>(
+    (clients, invoice) => {
+      const client = getClientById(invoice.clientId);
+      const label = client?.company ?? client?.fullName ?? "Unknown client";
+      clients[label] = (clients[label] ?? 0) + 1;
+      return clients;
+    },
+    {},
+  );
+  const yearOptions = seedInvoices.reduce<Record<string, number>>(
+    (years, invoice) => {
+      const year = getYearFromNumber(invoice.invoiceNumber);
+      years[year] = (years[year] ?? 0) + 1;
+      return years;
+    },
+    {},
+  );
+
   return (
     <AppShell>
-      <EntityPage
+      <RecordWorkspace
         actionLabel="New invoice"
-        columns={[
-          { label: "Invoice #" },
-          { label: "Client" },
-          { label: "Proposal #" },
-          { label: "Document link" },
-          { align: "right", label: "Status", width: "8rem" },
+        basePath="/invoices"
+        description="Invoice numbers, clients, proposal links, and payment status."
+        emptyLabel="No invoices yet."
+        filterGroups={[
+          {
+            title: "Client",
+            options: Object.entries(clientOptions).map(([label, count]) => ({
+              label,
+              count,
+            })),
+          },
+          {
+            title: "Status",
+            options: ["draft", "sent", "paid", "overdue", "void"].map(
+              (status) => ({
+                label: status,
+                count: seedInvoices.filter(
+                  (invoice) => invoice.status === status,
+                ).length,
+                active: status === "draft",
+              }),
+            ),
+          },
+          {
+            title: "Year",
+            options: Object.entries(yearOptions).map(([label, count]) => ({
+              label,
+              count,
+            })),
+          },
         ]}
-        description="Invoice numbers, client links, optional proposal links, and payment status."
-        detailDescription="Selecting an invoice will show number history, linked client, linked proposal, document link, and current status."
-        detailTitle="Select an invoice"
-        emptyLabel="No active invoices yet."
+        filters={[
+          { label: "Open", count: openInvoices.length, active: true },
+          { label: "Paid", count: paidInvoices.length },
+          { label: "Overdue", count: overdueInvoices.length },
+          { label: "Archived", count: archivedInvoices.length },
+        ]}
         icon={RiBillLine}
-        records={seedInvoices.map((invoice) => {
-          const client = getClientById(invoice.clientId);
-          const proposal = invoice.proposalId
-            ? getProposalById(invoice.proposalId)
-            : null;
-
-          return {
-            id: String(invoice.id),
-            cells: [
-              <div className="font-medium" key="invoice-number">
-                {invoice.invoiceNumber}
-              </div>,
-              client?.company ?? client?.fullName ?? "Unknown client",
-              proposal?.proposalNumber ?? "Direct",
-              invoice.documentLink ? "Attached" : "Missing",
-              <Badge
-                className="ml-auto capitalize"
-                key="status"
-                variant={getInvoiceStatusBadgeVariant(invoice.status)}
-              >
-                {invoice.status}
-              </Badge>,
-            ],
-            detailTitle: invoice.invoiceNumber,
-            detailDescription:
-              "Example invoice data with mixed lifecycle states for UI testing.",
-            details: [
-              {
-                label: "Client",
-                value: client?.company ?? client?.fullName ?? "Unknown client",
-              },
-              {
-                label: "Proposal",
-                value: proposal?.proposalNumber ?? "Direct invoice",
-              },
-              {
-                label: "Document",
-                value: invoice.documentLink ?? "No document link saved",
-              },
-              {
-                label: "Status",
-                value: (
-                  <Badge
-                    className="capitalize"
-                    variant={getInvoiceStatusBadgeVariant(invoice.status)}
-                  >
-                    {invoice.status}
-                  </Badge>
-                ),
-              },
-              {
-                label: "State",
-                value: invoice.archived ? "Archived" : "Active",
-              },
-            ],
-          };
-        })}
+        records={records}
+        selectedFilterGroup={selectedFilterGroup}
+        selectedId={selectedId}
+        sidebarOpen={sidebarState !== "closed"}
         title="Invoices"
       />
     </AppShell>

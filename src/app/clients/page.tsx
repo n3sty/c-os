@@ -1,60 +1,72 @@
 import { RiUser3Line } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
-import { EntityPage } from "@/components/app/entity-page";
-import { Badge } from "@/components/ui/badge";
-import {
-  getClientInvoiceCount,
-  getClientProposalCount,
-  seedClients,
-} from "@/lib/seed-data";
+import { RecordWorkspace } from "@/components/app/record-workspace";
+import { seedClients } from "@/lib/seed-data";
+import { getWorkspaceRecords } from "@/lib/workspace-records";
 
-export default function ClientsPage() {
+type ClientsPageProps = {
+  searchParams: Promise<{
+    filter?: string | string[];
+    record?: string | string[];
+    sidebar?: string | string[];
+  }>;
+};
+
+function getQueryValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ClientsPage({ searchParams }: ClientsPageProps) {
+  const query = await searchParams;
+  const selectedFilterGroup = getQueryValue(query.filter);
+  const selectedId = getQueryValue(query.record);
+  const sidebarState = getQueryValue(query.sidebar);
+  const activeClients = seedClients.filter((client) => !client.archived);
+  const archivedClients = seedClients.filter((client) => client.archived);
+  const records = getWorkspaceRecords("client");
+  const companyOptions = seedClients.reduce<Record<string, number>>(
+    (companies, client) => {
+      const label = client.company ?? "Independent";
+      companies[label] = (companies[label] ?? 0) + 1;
+      return companies;
+    },
+    {},
+  );
+
   return (
     <AppShell>
-      <EntityPage
+      <RecordWorkspace
         actionLabel="Add client"
-        columns={[
-          { label: "Name" },
-          { label: "Company" },
-          { label: "Client #" },
-          { label: "Email" },
-          { align: "right", label: "State", width: "8rem" },
+        basePath="/clients"
+        description="Client records and linked commercial work."
+        emptyLabel="No clients yet."
+        filterGroups={[
+          {
+            title: "Company",
+            options: Object.entries(companyOptions).map(([label, count]) => ({
+              label,
+              count,
+            })),
+          },
+          {
+            title: "State",
+            options: [
+              { label: "Active", count: activeClients.length, active: true },
+              { label: "Archived", count: archivedClients.length },
+            ],
+          },
         ]}
-        description="Client details, client numbers, and archive state."
-        detailDescription="Selecting a client will show contact details, linked proposals, linked invoices, and archive state."
-        detailTitle="Select a client"
-        emptyLabel="No active clients yet."
+        filters={[
+          { label: "Active", count: activeClients.length, active: true },
+          { label: "Archived", count: archivedClients.length },
+          { label: "All", count: seedClients.length },
+        ]}
         icon={RiUser3Line}
-        records={seedClients.map((client) => ({
-          id: String(client.id),
-          cells: [
-            <div className="font-medium" key="name">
-              {client.fullName}
-            </div>,
-            client.company ?? "Independent",
-            client.clientNumber,
-            client.email,
-            <Badge
-              className="ml-auto"
-              key="state"
-              variant={client.archived ? "outline" : "secondary"}
-            >
-              {client.archived ? "Archived" : "Active"}
-            </Badge>,
-          ],
-          detailTitle: client.fullName,
-          detailDescription:
-            "Example client data for development, navigation, and record detail states.",
-          details: [
-            { label: "Company", value: client.company ?? "Independent" },
-            { label: "Email", value: client.email },
-            { label: "Client #", value: client.clientNumber },
-            { label: "Proposals", value: getClientProposalCount(client.id) },
-            { label: "Invoices", value: getClientInvoiceCount(client.id) },
-            { label: "State", value: client.archived ? "Archived" : "Active" },
-          ],
-        }))}
+        records={records}
+        selectedFilterGroup={selectedFilterGroup}
+        selectedId={selectedId}
+        sidebarOpen={sidebarState !== "closed"}
         title="Clients"
       />
     </AppShell>

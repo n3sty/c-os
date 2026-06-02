@@ -1,76 +1,105 @@
 import { RiFileList3Line } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
-import { EntityPage } from "@/components/app/entity-page";
-import { Badge } from "@/components/ui/badge";
-import { getClientById, seedInvoices, seedProposals } from "@/lib/seed-data";
+import { RecordWorkspace } from "@/components/app/record-workspace";
+import { getClientById, seedProposals } from "@/lib/seed-data";
+import { getWorkspaceRecords } from "@/lib/workspace-records";
 
-export default function ProposalsPage() {
+type ProposalsPageProps = {
+  searchParams: Promise<{
+    filter?: string | string[];
+    record?: string | string[];
+    sidebar?: string | string[];
+  }>;
+};
+
+function getQueryValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getYearFromNumber(value: string) {
+  return value.match(/\d{4}/)?.[0] ?? "Unknown year";
+}
+
+export default async function ProposalsPage({
+  searchParams,
+}: ProposalsPageProps) {
+  const query = await searchParams;
+  const selectedFilterGroup = getQueryValue(query.filter);
+  const selectedId = getQueryValue(query.record);
+  const sidebarState = getQueryValue(query.sidebar);
+  const activeProposals = seedProposals.filter(
+    (proposal) => !proposal.archived,
+  );
+  const archivedProposals = seedProposals.filter(
+    (proposal) => proposal.archived,
+  );
+  const missingDocuments = seedProposals.filter(
+    (proposal) => !proposal.documentLink,
+  );
+  const clientOptions = seedProposals.reduce<Record<string, number>>(
+    (clients, proposal) => {
+      const client = getClientById(proposal.clientId);
+      const label = client?.company ?? client?.fullName ?? "Unknown client";
+      clients[label] = (clients[label] ?? 0) + 1;
+      return clients;
+    },
+    {},
+  );
+  const yearOptions = seedProposals.reduce<Record<string, number>>(
+    (years, proposal) => {
+      const year = getYearFromNumber(proposal.proposalNumber);
+      years[year] = (years[year] ?? 0) + 1;
+      return years;
+    },
+    {},
+  );
+  const records = getWorkspaceRecords("proposal");
+
   return (
     <AppShell>
-      <EntityPage
+      <RecordWorkspace
         actionLabel="New proposal"
-        columns={[
-          { label: "Proposal #" },
-          { label: "Client" },
-          { label: "Document link" },
-          { align: "right", label: "State", width: "8rem" },
+        basePath="/proposals"
+        description="Proposal numbers, clients, documents, and invoice links."
+        emptyLabel="No proposals yet."
+        filterGroups={[
+          {
+            title: "Client",
+            options: Object.entries(clientOptions).map(([label, count]) => ({
+              label,
+              count,
+            })),
+          },
+          {
+            title: "Year",
+            options: Object.entries(yearOptions).map(([label, count]) => ({
+              label,
+              count,
+            })),
+          },
+          {
+            title: "Document",
+            options: [
+              {
+                label: "Attached",
+                count: seedProposals.length - missingDocuments.length,
+              },
+              { label: "Missing", count: missingDocuments.length },
+            ],
+          },
         ]}
-        description="Proposal numbers are unique, linked to clients, and never reused."
-        detailDescription="Selecting a proposal will show its client, document link, invoice relationship, and archive state."
-        detailTitle="Select a proposal"
-        emptyLabel="No active proposals yet."
+        filters={[
+          { label: "Active", count: activeProposals.length, active: true },
+          { label: "Missing docs", count: missingDocuments.length },
+          { label: "Archived", count: archivedProposals.length },
+          { label: "All", count: seedProposals.length },
+        ]}
         icon={RiFileList3Line}
-        records={seedProposals.map((proposal) => {
-          const client = getClientById(proposal.clientId);
-          const linkedInvoices = seedInvoices.filter(
-            (invoice) => invoice.proposalId === proposal.id,
-          );
-
-          return {
-            id: String(proposal.id),
-            cells: [
-              <div className="font-medium" key="proposal-number">
-                {proposal.proposalNumber}
-              </div>,
-              client?.company ?? client?.fullName ?? "Unknown client",
-              proposal.documentLink ? "Attached" : "Missing",
-              <Badge
-                className="ml-auto"
-                key="state"
-                variant={proposal.archived ? "outline" : "secondary"}
-              >
-                {proposal.archived ? "Archived" : "Active"}
-              </Badge>,
-            ],
-            detailTitle: proposal.proposalNumber,
-            detailDescription:
-              "Example proposal data with linked client context and document state.",
-            details: [
-              {
-                label: "Client",
-                value: client?.company ?? client?.fullName ?? "Unknown client",
-              },
-              {
-                label: "Document",
-                value: proposal.documentLink ?? "No document link saved",
-              },
-              {
-                label: "Invoices",
-                value:
-                  linkedInvoices.length > 0
-                    ? linkedInvoices
-                        .map((invoice) => invoice.invoiceNumber)
-                        .join(", ")
-                    : "Not invoiced yet",
-              },
-              {
-                label: "State",
-                value: proposal.archived ? "Archived" : "Active",
-              },
-            ],
-          };
-        })}
+        records={records}
+        selectedFilterGroup={selectedFilterGroup}
+        selectedId={selectedId}
+        sidebarOpen={sidebarState !== "closed"}
         title="Proposals"
       />
     </AppShell>

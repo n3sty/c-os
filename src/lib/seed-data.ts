@@ -1,6 +1,7 @@
 import type { VariantProps } from "class-variance-authority";
 
 import type { badgeVariants } from "@/components/ui/badge";
+import { formatTrackedNumber } from "@/lib/numbering";
 import type { invoiceStatusEnum } from "@/lib/schema";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
@@ -46,7 +47,7 @@ export const seedClients: SeedClient[] = [
     fullName: "Jules Vermeer",
     email: "jules@atlasbio.nl",
     company: "Atlas Bio",
-    clientNumber: "CLI-1001",
+    clientNumber: formatTrackedNumber("client", 1),
     archived: false,
   },
   {
@@ -54,7 +55,7 @@ export const seedClients: SeedClient[] = [
     fullName: "Mina Alvarez",
     email: "mina@northstarlabs.co",
     company: "Northstar Labs",
-    clientNumber: "CLI-1002",
+    clientNumber: formatTrackedNumber("client", 2),
     archived: false,
   },
   {
@@ -62,7 +63,7 @@ export const seedClients: SeedClient[] = [
     fullName: "Tobias Jensen",
     email: "tobias@cinderstudio.io",
     company: "Cinder Studio",
-    clientNumber: "CLI-1003",
+    clientNumber: formatTrackedNumber("client", 3),
     archived: false,
   },
   {
@@ -70,7 +71,7 @@ export const seedClients: SeedClient[] = [
     fullName: "Leah Okafor",
     email: "leah@solvance.health",
     company: "Solvance Health",
-    clientNumber: "CLI-1004",
+    clientNumber: formatTrackedNumber("client", 4),
     archived: true,
   },
 ];
@@ -79,28 +80,28 @@ export const seedProposals: SeedProposal[] = [
   {
     id: 1,
     clientId: 1,
-    proposalNumber: "PROP-2026-001",
+    proposalNumber: formatTrackedNumber("proposal", 1, { year: 2026 }),
     documentLink: "https://docs.example.com/proposals/prop-2026-001",
     archived: false,
   },
   {
     id: 2,
     clientId: 2,
-    proposalNumber: "PROP-2026-002",
+    proposalNumber: formatTrackedNumber("proposal", 2, { year: 2026 }),
     documentLink: null,
     archived: false,
   },
   {
     id: 3,
     clientId: 3,
-    proposalNumber: "PROP-2026-003",
+    proposalNumber: formatTrackedNumber("proposal", 3, { year: 2026 }),
     documentLink: "https://docs.example.com/proposals/prop-2026-003",
     archived: false,
   },
   {
     id: 4,
     clientId: 4,
-    proposalNumber: "PROP-2025-014",
+    proposalNumber: formatTrackedNumber("proposal", 14, { year: 2025 }),
     documentLink: "https://docs.example.com/proposals/prop-2025-014",
     archived: true,
   },
@@ -111,7 +112,7 @@ export const seedInvoices: SeedInvoice[] = [
     id: 1,
     clientId: 1,
     proposalId: 1,
-    invoiceNumber: "INV-2026-031",
+    invoiceNumber: formatTrackedNumber("invoice", 31, { year: 2026 }),
     documentLink: "https://docs.example.com/invoices/inv-2026-031",
     status: "draft",
     archived: false,
@@ -120,7 +121,7 @@ export const seedInvoices: SeedInvoice[] = [
     id: 2,
     clientId: 2,
     proposalId: 2,
-    invoiceNumber: "INV-2026-032",
+    invoiceNumber: formatTrackedNumber("invoice", 32, { year: 2026 }),
     documentLink: "https://docs.example.com/invoices/inv-2026-032",
     status: "sent",
     archived: false,
@@ -129,7 +130,7 @@ export const seedInvoices: SeedInvoice[] = [
     id: 3,
     clientId: 3,
     proposalId: 3,
-    invoiceNumber: "INV-2026-033",
+    invoiceNumber: formatTrackedNumber("invoice", 33, { year: 2026 }),
     documentLink: null,
     status: "paid",
     archived: false,
@@ -138,7 +139,7 @@ export const seedInvoices: SeedInvoice[] = [
     id: 4,
     clientId: 1,
     proposalId: null,
-    invoiceNumber: "INV-2026-034",
+    invoiceNumber: formatTrackedNumber("invoice", 34, { year: 2026 }),
     documentLink: "https://docs.example.com/invoices/inv-2026-034",
     status: "overdue",
     archived: false,
@@ -147,7 +148,7 @@ export const seedInvoices: SeedInvoice[] = [
     id: 5,
     clientId: 4,
     proposalId: 4,
-    invoiceNumber: "INV-2025-118",
+    invoiceNumber: formatTrackedNumber("invoice", 118, { year: 2025 }),
     documentLink: "https://docs.example.com/invoices/inv-2025-118",
     status: "void",
     archived: true,

@@ -8,7 +8,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const clients = pgTable("clients", {
-  id: serial().primaryKey().generatedAlwaysAs(1),
+  id: serial().primaryKey(),
   fullName: text().notNull(),
   email: text().notNull(),
   company: text(),

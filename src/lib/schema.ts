@@ -1,11 +1,20 @@
 import {
   boolean,
   numeric,
+  pgEnum,
   pgTable,
   serial,
   text,
   varchar,
 } from "drizzle-orm/pg-core";
+
+export const invoiceStatusEnum = pgEnum("invoice_status", [
+  "draft",
+  "sent",
+  "paid",
+  "overdue",
+  "void",
+]);
 
 export const clients = pgTable("clients", {
   id: serial().primaryKey(),
@@ -30,6 +39,7 @@ export const invoices = pgTable("invoices", {
   proposal_id: serial().references(() => proposals.id),
   document_link: text(),
   invoice_number: varchar().unique(),
+  status: invoiceStatusEnum().notNull().default("draft"),
   archived: boolean().default(false),
 });
 

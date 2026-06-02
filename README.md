@@ -12,6 +12,12 @@ Drizzle studio:
 bunx drizzle-kit studio
 ```
 
+Seed development data:
+
+```zsh
+bun run seed
+```
+
 **PRODUCTION CHECKLIST**
 
 - [ ] put database variables in .env

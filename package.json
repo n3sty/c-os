@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "seed": "bun run src/lib/seed.ts"
   },
   "dependencies": {
     "@remixicon/react": "^4.9.0",

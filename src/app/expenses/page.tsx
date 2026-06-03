@@ -2,7 +2,7 @@ import { RiReceiptLine } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
-import { formatCurrency, seedExpenses } from "@/lib/seed-data";
+import { formatCurrency, loadWorkspaceSnapshot } from "@/lib/database";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type ExpensesPageProps = {
@@ -33,15 +33,16 @@ export default async function ExpensesPage({
   searchParams,
 }: ExpensesPageProps) {
   const query = await searchParams;
+  const snapshot = await loadWorkspaceSnapshot();
   const selectedFilterGroup = getQueryValue(query.filter);
   const selectedId = getQueryValue(query.record);
   const sidebarState = getQueryValue(query.sidebar);
-  const totalAmount = seedExpenses.reduce(
+  const totalAmount = snapshot.expenses.reduce(
     (total, expense) => total + expense.amount,
     0,
   );
-  const records = getWorkspaceRecords("expense");
-  const amountBands = seedExpenses.reduce<Record<string, number>>(
+  const records = await getWorkspaceRecords("expense", snapshot);
+  const amountBands = snapshot.expenses.reduce<Record<string, number>>(
     (bands, expense) => {
       const band = getAmountBand(expense.amount);
       bands[band] = (bands[band] ?? 0) + 1;
@@ -49,14 +50,13 @@ export default async function ExpensesPage({
     },
     {},
   );
-  const largerExpenses = seedExpenses.filter(
+  const largerExpenses = snapshot.expenses.filter(
     (expense) => expense.amount >= 150,
   );
 
   return (
     <AppShell>
       <RecordWorkspace
-        actionLabel="Log expense"
         basePath="/expenses"
         description={`${formatCurrency(totalAmount)} logged for bookkeeping export.`}
         emptyLabel="No expenses logged yet."
@@ -71,15 +71,18 @@ export default async function ExpensesPage({
           {
             title: "Export",
             options: [
-              { label: "Included", count: seedExpenses.length, active: true },
+              {
+                label: "Included",
+                count: snapshot.expenses.length,
+              },
               { label: "Needs review", count: largerExpenses.length },
             ],
           },
         ]}
         filters={[
-          { label: "All", count: seedExpenses.length, active: true },
+          { label: "All", count: snapshot.expenses.length, active: true },
           { label: "Needs review", count: largerExpenses.length },
-          { label: "Export ready", count: seedExpenses.length },
+          { label: "Export ready", count: snapshot.expenses.length },
         ]}
         icon={RiReceiptLine}
         records={records}

@@ -16,6 +16,13 @@ export const invoiceStatusEnum = pgEnum("invoice_status", [
   "void",
 ]);
 
+export const proposalStatusEnum = pgEnum("proposal_status", [
+  "draft",
+  "sent",
+  "accepted",
+  "declined",
+]);
+
 export const clients = pgTable("clients", {
   id: serial().primaryKey(),
   fullName: text().notNull(),
@@ -30,6 +37,10 @@ export const proposals = pgTable("proposals", {
   client_id: serial().references(() => clients.id),
   document_link: text(),
   proposal_number: varchar().unique(),
+  title: text().notNull(),
+  description: text(),
+  date: varchar().notNull(),
+  status: proposalStatusEnum().notNull().default("draft"),
   archived: boolean().default(false),
 });
 

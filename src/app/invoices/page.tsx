@@ -2,7 +2,8 @@ import { RiBillLine } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
-import { getClientById, seedInvoices } from "@/lib/seed-data";
+import { buildFormOptions } from "@/lib/creation";
+import { loadWorkspaceSnapshot } from "@/lib/database";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type InvoicesPageProps = {
@@ -25,31 +26,36 @@ export default async function InvoicesPage({
   searchParams,
 }: InvoicesPageProps) {
   const query = await searchParams;
+  const snapshot = await loadWorkspaceSnapshot();
   const selectedFilterGroup = getQueryValue(query.filter);
   const selectedId = getQueryValue(query.record);
   const sidebarState = getQueryValue(query.sidebar);
-  const openInvoices = seedInvoices.filter(
+  const openInvoices = snapshot.invoices.filter(
     (invoice) =>
       !["paid", "void"].includes(invoice.status) && !invoice.archived,
   );
-  const paidInvoices = seedInvoices.filter(
+  const paidInvoices = snapshot.invoices.filter(
     (invoice) => invoice.status === "paid",
   );
-  const overdueInvoices = seedInvoices.filter(
+  const overdueInvoices = snapshot.invoices.filter(
     (invoice) => invoice.status === "overdue",
   );
-  const archivedInvoices = seedInvoices.filter((invoice) => invoice.archived);
-  const records = getWorkspaceRecords("invoice");
-  const clientOptions = seedInvoices.reduce<Record<string, number>>(
+  const archivedInvoices = snapshot.invoices.filter(
+    (invoice) => invoice.archived,
+  );
+  const records = await getWorkspaceRecords("invoice", snapshot);
+  const formOptions = buildFormOptions(snapshot);
+  const clientOptions = snapshot.invoices.reduce<Record<string, number>>(
     (clients, invoice) => {
-      const client = getClientById(invoice.clientId);
+      const client =
+        snapshot.clients.find((item) => item.id === invoice.clientId) ?? null;
       const label = client?.company ?? client?.fullName ?? "Unknown client";
       clients[label] = (clients[label] ?? 0) + 1;
       return clients;
     },
     {},
   );
-  const yearOptions = seedInvoices.reduce<Record<string, number>>(
+  const yearOptions = snapshot.invoices.reduce<Record<string, number>>(
     (years, invoice) => {
       const year = getYearFromNumber(invoice.invoiceNumber);
       years[year] = (years[year] ?? 0) + 1;
@@ -59,10 +65,10 @@ export default async function InvoicesPage({
   );
 
   return (
-    <AppShell>
+    <AppShell formOptions={formOptions}>
       <RecordWorkspace
-        actionLabel="New invoice"
         basePath="/invoices"
+        creationTarget="invoice"
         description="Invoice numbers, clients, proposal links, and payment status."
         emptyLabel="No invoices yet."
         filterGroups={[
@@ -78,10 +84,9 @@ export default async function InvoicesPage({
             options: ["draft", "sent", "paid", "overdue", "void"].map(
               (status) => ({
                 label: status,
-                count: seedInvoices.filter(
+                count: snapshot.invoices.filter(
                   (invoice) => invoice.status === status,
                 ).length,
-                active: status === "draft",
               }),
             ),
           },
@@ -98,6 +103,7 @@ export default async function InvoicesPage({
           { label: "Paid", count: paidInvoices.length },
           { label: "Overdue", count: overdueInvoices.length },
           { label: "Archived", count: archivedInvoices.length },
+          { label: "All", count: snapshot.invoices.length },
         ]}
         icon={RiBillLine}
         records={records}

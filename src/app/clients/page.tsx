@@ -2,7 +2,8 @@ import { RiUser3Line } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
-import { seedClients } from "@/lib/seed-data";
+import { buildFormOptions } from "@/lib/creation";
+import { loadWorkspaceSnapshot } from "@/lib/database";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type ClientsPageProps = {
@@ -19,13 +20,15 @@ function getQueryValue(value?: string | string[]) {
 
 export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   const query = await searchParams;
+  const snapshot = await loadWorkspaceSnapshot();
   const selectedFilterGroup = getQueryValue(query.filter);
   const selectedId = getQueryValue(query.record);
   const sidebarState = getQueryValue(query.sidebar);
-  const activeClients = seedClients.filter((client) => !client.archived);
-  const archivedClients = seedClients.filter((client) => client.archived);
-  const records = getWorkspaceRecords("client");
-  const companyOptions = seedClients.reduce<Record<string, number>>(
+  const activeClients = snapshot.clients.filter((client) => !client.archived);
+  const archivedClients = snapshot.clients.filter((client) => client.archived);
+  const records = await getWorkspaceRecords("client", snapshot);
+  const formOptions = buildFormOptions(snapshot);
+  const companyOptions = snapshot.clients.reduce<Record<string, number>>(
     (companies, client) => {
       const label = client.company ?? "Independent";
       companies[label] = (companies[label] ?? 0) + 1;
@@ -35,10 +38,10 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
   );
 
   return (
-    <AppShell>
+    <AppShell formOptions={formOptions}>
       <RecordWorkspace
-        actionLabel="Add client"
         basePath="/clients"
+        creationTarget="client"
         description="Client records and linked commercial work."
         emptyLabel="No clients yet."
         filterGroups={[
@@ -52,7 +55,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
           {
             title: "State",
             options: [
-              { label: "Active", count: activeClients.length, active: true },
+              { label: "Active", count: activeClients.length },
               { label: "Archived", count: archivedClients.length },
             ],
           },
@@ -60,7 +63,7 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         filters={[
           { label: "Active", count: activeClients.length, active: true },
           { label: "Archived", count: archivedClients.length },
-          { label: "All", count: seedClients.length },
+          { label: "All", count: snapshot.clients.length },
         ]}
         icon={RiUser3Line}
         records={records}

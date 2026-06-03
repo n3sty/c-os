@@ -12,6 +12,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { CreateRecordDialog } from "@/components/app/create-record-dialog";
+import { KeyboardShortcutProvider } from "@/components/app/keyboard-shortcut-provider";
+import type { FormOptionsContext } from "@/lib/creation";
+import { FormOptionsProvider } from "@/lib/form-options-context";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -25,55 +29,65 @@ const navigation = [
 
 type AppShellProps = {
   children: ReactNode;
+  formOptions?: FormOptionsContext;
 };
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, formOptions }: AppShellProps) {
   const pathname = usePathname();
 
   return (
-    <main className="min-h-svh bg-background">
-      <div className="flex min-h-svh w-full">
-        <aside className="hidden w-58 shrink-0 bg-background px-3 py-4 text-foreground md:block">
-          <div className="flex h-full flex-col">
-            <div className="px-2 pb-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-6 items-center justify-center rounded-md text-muted-foreground">
-                  <RiInboxLine size={16} />
+    <FormOptionsProvider value={formOptions}>
+      <KeyboardShortcutProvider>
+        <main className="min-h-svh bg-background">
+          <div className="flex min-h-svh w-full">
+            <aside className="hidden w-58 shrink-0 bg-background px-3 py-4 text-foreground md:block">
+              <div className="flex h-full flex-col">
+                <div className="px-2 pb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-6 items-center justify-center rounded-md text-muted-foreground">
+                      <RiInboxLine size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        Coscience OS
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">Coscience OS</p>
-                </div>
+
+                <nav className="space-y-1">
+                  {navigation.map((item) => {
+                    const active =
+                      item.href === "/"
+                        ? pathname === "/"
+                        : pathname.startsWith(item.href);
+
+                    return (
+                      <Link
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "flex h-8 items-center gap-2.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground",
+                          active && "bg-muted/45 font-medium text-foreground",
+                        )}
+                        href={item.href}
+                        key={item.href}
+                      >
+                        <item.icon size={15} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
               </div>
-            </div>
+            </aside>
 
-            <nav className="space-y-1">
-              {navigation.map((item) => {
-                const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
-
-                return (
-                  <Link
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex h-8 items-center gap-2.5 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground",
-                      active && "bg-muted/45 font-medium text-foreground",
-                    )}
-                    href={item.href}
-                    key={item.href}
-                  >
-                    <item.icon size={15} />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            <section className="min-w-0 flex-1">
+              {children}
+              <CreateRecordDialog />
+            </section>
           </div>
-        </aside>
-
-        <section className="min-w-0 flex-1">{children}</section>
-      </div>
-    </main>
+        </main>
+      </KeyboardShortcutProvider>
+    </FormOptionsProvider>
   );
 }

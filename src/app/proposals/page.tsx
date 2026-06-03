@@ -2,7 +2,8 @@ import { RiFileList3Line } from "@remixicon/react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
-import { getClientById, seedProposals } from "@/lib/seed-data";
+import { buildFormOptions } from "@/lib/creation";
+import { loadWorkspaceSnapshot } from "@/lib/database";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type ProposalsPageProps = {
@@ -25,28 +26,30 @@ export default async function ProposalsPage({
   searchParams,
 }: ProposalsPageProps) {
   const query = await searchParams;
+  const snapshot = await loadWorkspaceSnapshot();
   const selectedFilterGroup = getQueryValue(query.filter);
   const selectedId = getQueryValue(query.record);
   const sidebarState = getQueryValue(query.sidebar);
-  const activeProposals = seedProposals.filter(
-    (proposal) => !proposal.archived,
-  );
-  const archivedProposals = seedProposals.filter(
+  const archivedProposals = snapshot.proposals.filter(
     (proposal) => proposal.archived,
   );
-  const missingDocuments = seedProposals.filter(
+  const missingDocuments = snapshot.proposals.filter(
     (proposal) => !proposal.documentLink,
   );
-  const clientOptions = seedProposals.reduce<Record<string, number>>(
+  const openProposals = snapshot.proposals.filter(
+    (proposal) => !["accepted", "declined"].includes(proposal.status),
+  );
+  const clientOptions = snapshot.proposals.reduce<Record<string, number>>(
     (clients, proposal) => {
-      const client = getClientById(proposal.clientId);
+      const client =
+        snapshot.clients.find((item) => item.id === proposal.clientId) ?? null;
       const label = client?.company ?? client?.fullName ?? "Unknown client";
       clients[label] = (clients[label] ?? 0) + 1;
       return clients;
     },
     {},
   );
-  const yearOptions = seedProposals.reduce<Record<string, number>>(
+  const yearOptions = snapshot.proposals.reduce<Record<string, number>>(
     (years, proposal) => {
       const year = getYearFromNumber(proposal.proposalNumber);
       years[year] = (years[year] ?? 0) + 1;
@@ -54,13 +57,14 @@ export default async function ProposalsPage({
     },
     {},
   );
-  const records = getWorkspaceRecords("proposal");
+  const records = await getWorkspaceRecords("proposal", snapshot);
+  const formOptions = buildFormOptions(snapshot);
 
   return (
-    <AppShell>
+    <AppShell formOptions={formOptions}>
       <RecordWorkspace
-        actionLabel="New proposal"
         basePath="/proposals"
+        creationTarget="proposal"
         description="Proposal numbers, clients, documents, and invoice links."
         emptyLabel="No proposals yet."
         filterGroups={[
@@ -79,21 +83,22 @@ export default async function ProposalsPage({
             })),
           },
           {
-            title: "Document",
-            options: [
-              {
-                label: "Attached",
-                count: seedProposals.length - missingDocuments.length,
-              },
-              { label: "Missing", count: missingDocuments.length },
-            ],
+            title: "Status",
+            options: ["draft", "sent", "accepted", "declined"].map(
+              (status) => ({
+                label: status,
+                count: snapshot.proposals.filter(
+                  (proposal) => proposal.status === status,
+                ).length,
+              }),
+            ),
           },
         ]}
         filters={[
-          { label: "Active", count: activeProposals.length, active: true },
+          { label: "Open", count: openProposals.length, active: true },
           { label: "Missing docs", count: missingDocuments.length },
           { label: "Archived", count: archivedProposals.length },
-          { label: "All", count: seedProposals.length },
+          { label: "All", count: snapshot.proposals.length },
         ]}
         icon={RiFileList3Line}
         records={records}

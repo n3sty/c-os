@@ -10,7 +10,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app/app-shell";
 import { DetailSurface } from "@/components/app/record-workspace";
 import { Button } from "@/components/ui/button";
-import { seedNotifications } from "@/lib/seed-data";
+import { seedNotifications } from "@/lib/database";
 import { getWorkspaceEntityContext } from "@/lib/workspace-records";
 
 type InboxPageProps = {
@@ -31,7 +31,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
       (notification) => notification.id === selectedNotificationId,
     ) ?? null;
   const detailContext = selectedNotification
-    ? getWorkspaceEntityContext(selectedNotification.target)
+    ? await getWorkspaceEntityContext(selectedNotification.target)
     : null;
   const selectedRecord = detailContext?.record ?? null;
   const selectedRecordPosition =

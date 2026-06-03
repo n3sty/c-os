@@ -1,12 +1,13 @@
 import type { VariantProps } from "class-variance-authority";
 
 import type { badgeVariants } from "@/components/ui/badge";
+import type { invoiceStatusEnum } from "@/lib/database/schema";
 import { formatTrackedNumber } from "@/lib/numbering";
-import type { invoiceStatusEnum } from "@/lib/schema";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
 
 export type InvoiceStatus = (typeof invoiceStatusEnum.enumValues)[number];
+export type SeedProposalStatus = "draft" | "sent" | "accepted" | "declined";
 
 export type SeedClient = {
   id: number;
@@ -21,6 +22,10 @@ export type SeedProposal = {
   id: number;
   clientId: number;
   proposalNumber: string;
+  title: string;
+  description: string | null;
+  date: string;
+  status: SeedProposalStatus;
   documentLink: string | null;
   archived: boolean;
 };
@@ -96,6 +101,10 @@ export const seedProposals: SeedProposal[] = [
     id: 1,
     clientId: 1,
     proposalNumber: formatTrackedNumber("proposal", 1, { year: 2026 }),
+    title: "Atlas Bio research sprint",
+    description: null,
+    date: "2026-01-12",
+    status: "accepted",
     documentLink: "https://docs.example.com/proposals/prop-2026-001",
     archived: false,
   },
@@ -103,6 +112,10 @@ export const seedProposals: SeedProposal[] = [
     id: 2,
     clientId: 2,
     proposalNumber: formatTrackedNumber("proposal", 2, { year: 2026 }),
+    title: "Northstar launch workshop",
+    description: null,
+    date: "2026-02-03",
+    status: "sent",
     documentLink: null,
     archived: false,
   },
@@ -110,6 +123,10 @@ export const seedProposals: SeedProposal[] = [
     id: 3,
     clientId: 3,
     proposalNumber: formatTrackedNumber("proposal", 3, { year: 2026 }),
+    title: "Cinder Studio data cleanup",
+    description: null,
+    date: "2026-03-18",
+    status: "draft",
     documentLink: "https://docs.example.com/proposals/prop-2026-003",
     archived: false,
   },
@@ -117,6 +134,10 @@ export const seedProposals: SeedProposal[] = [
     id: 4,
     clientId: 4,
     proposalNumber: formatTrackedNumber("proposal", 14, { year: 2025 }),
+    title: "Solvance archive migration",
+    description: null,
+    date: "2025-11-29",
+    status: "declined",
     documentLink: "https://docs.example.com/proposals/prop-2025-014",
     archived: true,
   },

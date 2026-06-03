@@ -1,13 +1,13 @@
 import { sql } from "drizzle-orm";
 
-import { drib } from "@/lib/db";
-import { clients, expenses, invoices, proposals } from "@/lib/schema";
+import { drib } from "@/lib/database/db";
+import { clients, expenses, invoices, proposals } from "@/lib/database/schema";
 import {
   seedClients,
   seedExpenses,
   seedInvoices,
   seedProposals,
-} from "@/lib/seed-data";
+} from "@/lib/database/seed-data";
 
 async function main() {
   await drib.delete(invoices);
@@ -31,6 +31,9 @@ async function main() {
       id: proposal.id,
       client_id: proposal.clientId,
       proposal_number: proposal.proposalNumber,
+      title: proposal.title,
+      date: proposal.date,
+      status: proposal.status,
       document_link: proposal.documentLink,
       archived: proposal.archived,
     })),

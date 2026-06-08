@@ -28,6 +28,7 @@ export type KeyboardShortcutRegistration = {
   preventDefault?: boolean;
   stopPropagation?: boolean;
   priority?: number;
+  isActive?: () => boolean;
 };
 
 type KeyboardShortcutContextValue = {
@@ -58,9 +59,48 @@ export function KeyboardShortcutProvider({
   );
 
   useEffect(() => {
+    function handleDismissAlias(event: KeyboardEvent) {
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.repeat ||
+        event.key.toLowerCase() !== "q" ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.shiftKey ||
+        isEditableShortcutTarget(event.target)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.target?.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          code: "Escape",
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+        }),
+      );
+    }
+
+    document.addEventListener("keydown", handleDismissAlias, true);
+
+    return () => {
+      document.removeEventListener("keydown", handleDismissAlias, true);
+    };
+  }, []);
+
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       const shortcuts = [...shortcutsRef.current.values()]
-        .filter((shortcut) => shortcut.enabled !== false)
+        .filter(
+          (shortcut) =>
+            shortcut.enabled !== false && shortcut.isActive?.() !== false,
+        )
         .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0));
 
       for (const shortcut of shortcuts) {
@@ -120,6 +160,7 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcutRegistration) {
     preventDefault,
     stopPropagation,
     priority,
+    isActive,
   } = shortcut;
   useEffect(() => {
     handlerRef.current = shortcut.handler;
@@ -141,6 +182,7 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcutRegistration) {
       preventDefault,
       stopPropagation,
       priority,
+      isActive,
       handler: (event) => handlerRef.current(event),
     });
   }, [
@@ -153,5 +195,6 @@ export function useKeyboardShortcut(shortcut: KeyboardShortcutRegistration) {
     preventDefault,
     stopPropagation,
     priority,
+    isActive,
   ]);
 }

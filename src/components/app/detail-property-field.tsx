@@ -15,8 +15,8 @@ import {
   type UpdateRecordTarget,
   updateRecordFieldAction,
 } from "@/app/actions/records";
+import { useDetailProperties } from "@/components/app/detail-properties-context";
 import { useKeyboardShortcut } from "@/components/app/keyboard-shortcut-provider";
-import { useRecordFocus } from "@/components/app/record-focus-context";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -74,7 +74,7 @@ export const PropertyTextField = forwardRef<
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
   const debouncedSave = useSaveField(target);
-  const focusTitle = useRecordFocus();
+  const properties = useDetailProperties();
 
   useImperativeHandle(ref, () => ({
     focus: () => inputRef.current?.focus(),
@@ -83,12 +83,16 @@ export const PropertyTextField = forwardRef<
   useKeyboardShortcut({
     id:
       shortcutId ??
-      `detail-field-${target.entity}-${target.id}-${target.field}`,
+      `detail-field-${properties.shortcutScope}-${target.entity}-${target.id}-${target.field}`,
     keys: { key: shortcutKey ?? "" },
     enabled: Boolean(shortcutKey),
     allowInEditable: false,
+    isActive: () =>
+      properties.isShortcutActive() &&
+      (properties.shortcutScope === "floating" ||
+        inputRef.current?.offsetParent !== null),
     priority: 80,
-    handler: () => inputRef.current?.focus(),
+    handler: () => properties.runFieldShortcut(() => inputRef.current?.focus()),
   });
 
   return (
@@ -104,10 +108,13 @@ export const PropertyTextField = forwardRef<
         debouncedSave(e.target.value);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          inputRef.current?.blur();
-          focusTitle?.();
+        switch (e.key) {
+          case "Enter":
+          case "Escape":
+            e.preventDefault();
+            e.stopPropagation();
+            properties.releaseFieldFocus();
+            break;
         }
       }}
     />
@@ -137,7 +144,7 @@ export const PropertySelectField = forwardRef<
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
-  const focusTitle = useRecordFocus();
+  const properties = useDetailProperties();
 
   const currentLabel = options.find((o) => o.value === value)?.label ?? value;
   const currentIndex = options.findIndex((o) => o.value === value);
@@ -152,14 +159,20 @@ export const PropertySelectField = forwardRef<
   useKeyboardShortcut({
     id:
       shortcutId ??
-      `detail-field-${target.entity}-${target.id}-${target.field}`,
+      `detail-field-${properties.shortcutScope}-${target.entity}-${target.id}-${target.field}`,
     keys: { key: shortcutKey ?? "" },
     enabled: Boolean(shortcutKey),
     allowInEditable: false,
+    isActive: () =>
+      properties.isShortcutActive() &&
+      (properties.shortcutScope === "floating" ||
+        triggerRef.current?.offsetParent !== null),
     priority: 80,
     handler: () => {
-      triggerRef.current?.focus();
-      setOpen(true);
+      properties.runFieldShortcut(() => {
+        triggerRef.current?.focus();
+        setOpen(true);
+      });
     },
   });
 
@@ -197,8 +210,9 @@ export const PropertySelectField = forwardRef<
         break;
       case "Escape":
         e.preventDefault();
+        e.stopPropagation();
         setOpen(false);
-        focusTitle?.();
+        properties.releaseFieldFocus();
         break;
     }
   }
@@ -278,7 +292,7 @@ export const PropertyDateField = forwardRef<
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [, startTransition] = useTransition();
-  const focusTitle = useRecordFocus();
+  const properties = useDetailProperties();
 
   useImperativeHandle(ref, () => ({
     focus: () => {
@@ -290,14 +304,20 @@ export const PropertyDateField = forwardRef<
   useKeyboardShortcut({
     id:
       shortcutId ??
-      `detail-field-${target.entity}-${target.id}-${target.field}`,
+      `detail-field-${properties.shortcutScope}-${target.entity}-${target.id}-${target.field}`,
     keys: { key: shortcutKey ?? "" },
     enabled: Boolean(shortcutKey),
     allowInEditable: false,
+    isActive: () =>
+      properties.isShortcutActive() &&
+      (properties.shortcutScope === "floating" ||
+        triggerRef.current?.offsetParent !== null),
     priority: 80,
     handler: () => {
-      triggerRef.current?.focus();
-      setOpen(true);
+      properties.runFieldShortcut(() => {
+        triggerRef.current?.focus();
+        setOpen(true);
+      });
     },
   });
 
@@ -332,8 +352,10 @@ export const PropertyDateField = forwardRef<
         className="w-auto gap-0 rounded-xl p-0"
         onKeyDown={(e) => {
           if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
             setOpen(false);
-            focusTitle?.();
+            properties.releaseFieldFocus();
           }
         }}
         sideOffset={6}

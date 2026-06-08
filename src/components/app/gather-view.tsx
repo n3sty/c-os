@@ -1,17 +1,20 @@
 "use client";
 
-import {
-  RiCloseLine,
-  RiEqualizerLine,
-  RiSidebarUnfoldLine,
-} from "@remixicon/react";
+import { RiCloseLine, RiSidebarUnfoldLine } from "@remixicon/react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { ListOptionsPopover } from "@/components/app/list-options-popover";
-import type { WorkspaceRecord } from "@/components/app/record-workspace";
+import type {
+  WorkspaceRecord,
+  WorkspaceSortOption,
+} from "@/components/app/record-workspace";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  filterWorkspaceRecords,
+  sortWorkspaceRecords,
+} from "@/lib/workspace-list";
 
 type WorkspaceFilter = {
   label: string;
@@ -32,6 +35,7 @@ type GatherViewProps = {
   emptyLabel: string;
   filters: WorkspaceFilter[];
   filterGroups: WorkspaceFilterGroup[];
+  sortOptions: WorkspaceSortOption[];
   records: WorkspaceRecord[];
 };
 
@@ -53,17 +57,21 @@ export function GatherView({
   emptyLabel,
   filters,
   filterGroups,
+  sortOptions,
   records,
 }: GatherViewProps) {
   const defaultView = filters.find((f) => f.active)?.label ?? filters[0]?.label;
   const [activeView, setActiveView] = useState<string>(defaultView ?? "");
-  const [activeGroupOptions, setActiveGroupOptions] = useState<Set<string>>(
-    new Set(),
-  );
+  const [activeFilters, setActiveFilters] = useState<
+    Record<string, Set<string>>
+  >({});
   const [activeGroupTitle, setActiveGroupTitle] = useState<string>(
     initialFilterGroup ?? filterGroups[0]?.title ?? "",
   );
   const [sidebarOpen, setSidebarOpen] = useState(initialSidebarOpen);
+  const [selectedSort, setSelectedSort] = useState<WorkspaceSortOption | null>(
+    sortOptions[0] ?? null,
+  );
 
   const visibleFilterGroups = filterGroups
     .map((group) => ({
@@ -77,26 +85,32 @@ export function GatherView({
     visibleFilterGroups[0];
 
   function toggleGroupOption(label: string) {
-    setActiveGroupOptions((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label);
-      else next.add(label);
-      return next;
+    if (!activeGroup) return;
+
+    setActiveFilters((previousFilters) => {
+      const selectedOptions = new Set(previousFilters[activeGroup.title] ?? []);
+
+      if (selectedOptions.has(label)) selectedOptions.delete(label);
+      else selectedOptions.add(label);
+
+      return {
+        ...previousFilters,
+        [activeGroup.title]: selectedOptions,
+      };
     });
   }
 
-  const filteredRecords = records.filter((record) => {
-    const passesView =
-      !activeView ||
-      activeView === "All" ||
-      record.filterKeys?.includes(activeView);
-
-    const passesGroup =
-      activeGroupOptions.size === 0 ||
-      (record.group !== undefined && activeGroupOptions.has(record.group));
-
-    return passesView && passesGroup;
-  });
+  const filteredRecords = filterWorkspaceRecords(
+    records,
+    activeView,
+    activeFilters,
+  );
+  const visibleRecords = sortWorkspaceRecords(
+    filteredRecords,
+    selectedSort
+      ? { key: selectedSort.key, direction: selectedSort.direction }
+      : null,
+  );
 
   return (
     <div className="grid min-h-[calc(100svh-2rem)] grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card">
@@ -126,15 +140,13 @@ export function GatherView({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <ListOptionsPopover filterGroups={filterGroups} />
-          <Button
-            aria-label="Quick filters"
-            className="size-8 rounded-full"
-            size="icon"
-            variant="ghost"
-          >
-            <RiEqualizerLine />
-          </Button>
+          {selectedSort && (
+            <ListOptionsPopover
+              onSortChange={setSelectedSort}
+              selectedSort={selectedSort}
+              sortOptions={sortOptions}
+            />
+          )}
           <Button
             aria-label={
               sidebarOpen ? "Hide filter sidebar" : "Show filter sidebar"
@@ -161,9 +173,9 @@ export function GatherView({
         <main className="min-w-0 overflow-hidden">
           <section className="h-full min-h-0 overflow-hidden">
             <div className="h-full overflow-auto">
-              {filteredRecords.length > 0 ? (
+              {visibleRecords.length > 0 ? (
                 <div className="px-1 py-1">
-                  {filteredRecords.map((record) => (
+                  {visibleRecords.map((record) => (
                     <div
                       className="group grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-muted/25 sm:px-3"
                       key={record.id}
@@ -248,7 +260,12 @@ export function GatherView({
                     onClick={() => setActiveGroupTitle(group.title)}
                     type="button"
                   >
-                    {group.title}
+                    <span className="truncate">{group.title}</span>
+                    {(activeFilters[group.title]?.size ?? 0) > 0 && (
+                      <span className="ml-1 tabular-nums">
+                        {activeFilters[group.title].size}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -256,7 +273,9 @@ export function GatherView({
               {activeGroup && (
                 <div className="space-y-1 pt-1">
                   {activeGroup.options.map((option) => {
-                    const isActive = activeGroupOptions.has(option.label);
+                    const isActive =
+                      activeFilters[activeGroup.title]?.has(option.label) ??
+                      false;
                     return (
                       <button
                         className={cn(

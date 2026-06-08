@@ -3,6 +3,7 @@ import { RiReceiptLine } from "@remixicon/react";
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
 import { formatCurrency, loadWorkspaceSnapshot } from "@/lib/database";
+import { getExpenseCategory } from "@/lib/expense-category";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type ExpensesPageProps = {
@@ -15,18 +16,6 @@ type ExpensesPageProps = {
 
 function getQueryValue(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function getAmountBand(amount: number) {
-  if (amount < 50) {
-    return "Under $50";
-  }
-
-  if (amount < 150) {
-    return "$50-$149";
-  }
-
-  return "$150+";
 }
 
 export default async function ExpensesPage({
@@ -42,11 +31,11 @@ export default async function ExpensesPage({
     0,
   );
   const records = await getWorkspaceRecords("expense", snapshot);
-  const amountBands = snapshot.expenses.reduce<Record<string, number>>(
-    (bands, expense) => {
-      const band = getAmountBand(expense.amount);
-      bands[band] = (bands[band] ?? 0) + 1;
-      return bands;
+  const categories = snapshot.expenses.reduce<Record<string, number>>(
+    (counts, expense) => {
+      const category = getExpenseCategory(expense.description);
+      counts[category] = (counts[category] ?? 0) + 1;
+      return counts;
     },
     {},
   );
@@ -62,33 +51,42 @@ export default async function ExpensesPage({
         emptyLabel="No expenses logged yet."
         filterGroups={[
           {
-            title: "Amount",
-            options: Object.entries(amountBands).map(([label, count]) => ({
+            title: "Category",
+            options: Object.entries(categories).map(([label, count]) => ({
               label,
               count,
             })),
-          },
-          {
-            title: "Export",
-            options: [
-              {
-                label: "Included",
-                count: snapshot.expenses.length,
-              },
-              { label: "Needs review", count: largerExpenses.length },
-            ],
           },
         ]}
         filters={[
           { label: "All", count: snapshot.expenses.length, active: true },
           { label: "Needs review", count: largerExpenses.length },
-          { label: "Export ready", count: snapshot.expenses.length },
         ]}
         icon={RiReceiptLine}
         records={records}
         selectedFilterGroup={selectedFilterGroup}
         selectedId={selectedId}
         sidebarOpen={sidebarState !== "closed"}
+        sortOptions={[
+          {
+            label: "Category A-Z",
+            value: "category-asc",
+            key: "category",
+            direction: "asc",
+          },
+          {
+            label: "Highest amount",
+            value: "amount-desc",
+            key: "amount",
+            direction: "desc",
+          },
+          {
+            label: "Lowest amount",
+            value: "amount-asc",
+            key: "amount",
+            direction: "asc",
+          },
+        ]}
         title="Expenses"
       />
     </AppShell>

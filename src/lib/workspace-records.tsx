@@ -17,6 +17,7 @@ import {
   loadWorkspaceSnapshot,
   type WorkspaceSnapshot,
 } from "@/lib/database";
+import { getExpenseCategory } from "@/lib/expense-category";
 import {
   getInvoiceFilterKeys,
   getProposalFilterKeys,
@@ -91,6 +92,15 @@ function buildClientRecords(snapshot: WorkspaceSnapshot) {
       archived: client.archived,
       group: companyLabel,
       filterKeys: [client.archived ? "Archived" : "Active"],
+      filterAttributes: {
+        Company: companyLabel,
+        State: client.archived ? "Archived" : "Active",
+      },
+      sortValues: {
+        client: client.fullName,
+        company: companyLabel,
+        state: client.archived ? 1 : 0,
+      },
       eyebrow: client.clientNumber,
       title: client.fullName,
       subtitle: client.email,
@@ -216,6 +226,18 @@ function buildProposalRecords(snapshot: WorkspaceSnapshot) {
       archived: proposal.archived,
       group: clientLabel,
       filterKeys: proposalFilterKeys,
+      filterAttributes: {
+        Client: clientLabel,
+        Date: getYearFromNumber(proposal.proposalNumber),
+        Status: proposal.status,
+        State: proposal.archived ? "Archived" : "Active",
+      },
+      sortValues: {
+        client: clientLabel,
+        date: proposal.date,
+        status: proposal.status,
+        state: proposal.archived ? 1 : 0,
+      },
       eyebrow: proposal.proposalNumber,
       title: proposal.title,
       subtitle: clientLabel,
@@ -378,6 +400,18 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
       archived: invoice.archived,
       group: clientLabel,
       filterKeys: invoiceFilterKeys,
+      filterAttributes: {
+        Client: clientLabel,
+        Date: getYearFromNumber(invoice.invoiceNumber),
+        Status: invoice.status,
+        State: invoice.archived ? "Archived" : "Active",
+      },
+      sortValues: {
+        client: clientLabel,
+        date: invoice.invoiceNumber,
+        status: invoice.status,
+        state: invoice.archived ? 1 : 0,
+      },
       eyebrow: invoice.invoiceNumber,
       title: clientLabel,
       subtitle: proposal?.proposalNumber ?? "Direct invoice",
@@ -511,6 +545,7 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
 
 function buildExpenseRecords(snapshot: WorkspaceSnapshot) {
   return snapshot.expenses.map((expense) => {
+    const category = getExpenseCategory(expense.description);
     const amountBand =
       expense.amount < 50
         ? "Under $50"
@@ -531,11 +566,18 @@ function buildExpenseRecords(snapshot: WorkspaceSnapshot) {
       id: String(expense.id),
       entity: "expense" as const,
       archived: false,
-      group: amountBand,
+      group: category,
       filterKeys: expenseFilterKeys,
+      filterAttributes: {
+        Category: category,
+      },
+      sortValues: {
+        amount: expense.amount,
+        category,
+      },
       eyebrow: `EXP-${String(expense.id).padStart(3, "0")}`,
       title: expense.description,
-      subtitle: "Bookkeeping export",
+      subtitle: category,
       tags: [<RowPill key="amount">{formatCurrency(expense.amount)}</RowPill>],
       detailTitle: expense.description,
       detailDescription: expense.description,
@@ -554,6 +596,7 @@ function buildExpenseRecords(snapshot: WorkspaceSnapshot) {
                 shortcutKey: "m",
               } satisfies EditableFieldDescriptor,
             },
+            { label: "Category", value: category },
             { label: "Band", value: amountBand },
             {
               label: "Expense #",

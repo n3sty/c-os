@@ -36,6 +36,13 @@ type WorkspaceFilterGroup = {
   options: { label: string; count?: number }[];
 };
 
+export type WorkspaceSortOption = {
+  label: string;
+  value: string;
+  key: string;
+  direction: "asc" | "desc";
+};
+
 export type EditableFieldDescriptor =
   | {
       type: "text";
@@ -64,6 +71,7 @@ export type WorkspaceRecord = {
   group?: string;
   filterKeys?: string[];
   filterAttributes?: Record<string, string>;
+  sortValues?: Record<string, string | number>;
   eyebrow?: string;
   title: ReactNode;
   subtitle?: ReactNode;
@@ -101,6 +109,7 @@ type RecordWorkspaceProps = {
   emptyLabel: string;
   filters: WorkspaceFilter[];
   filterGroups: WorkspaceFilterGroup[];
+  sortOptions?: WorkspaceSortOption[];
   records: WorkspaceRecord[];
 };
 
@@ -137,6 +146,7 @@ export function RecordWorkspace({
   emptyLabel,
   filters,
   filterGroups,
+  sortOptions = [],
   records,
 }: RecordWorkspaceProps) {
   const selectedRecord =
@@ -168,6 +178,7 @@ export function RecordWorkspace({
           initialFilterGroup={selectedFilterGroup}
           records={records}
           sidebarOpen={sidebarOpen}
+          sortOptions={sortOptions}
           topbar={
             <GatherTopbar
               basePath={basePath}

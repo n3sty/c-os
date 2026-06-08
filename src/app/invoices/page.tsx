@@ -94,11 +94,18 @@ export default async function InvoicesPage({
             ),
           },
           {
-            title: "Year",
+            title: "Date",
             options: Object.entries(yearOptions).map(([label, count]) => ({
               label,
               count,
             })),
+          },
+          {
+            title: "State",
+            options: [
+              { label: "Active", count: activeInvoices.length },
+              { label: "Archived", count: archivedInvoices.length },
+            ],
           },
         ]}
         filters={[
@@ -106,13 +113,45 @@ export default async function InvoicesPage({
           { label: "Paid", count: paidInvoices.length },
           { label: "Overdue", count: overdueInvoices.length },
           { label: "Archived", count: archivedInvoices.length },
-          { label: "All", count: activeInvoices.length },
+          { label: "All", count: snapshot.invoices.length },
         ]}
         icon={RiBillLine}
         records={records}
         selectedFilterGroup={selectedFilterGroup}
         selectedId={selectedId}
         sidebarOpen={sidebarState !== "closed"}
+        sortOptions={[
+          {
+            label: "Newest date",
+            value: "date-desc",
+            key: "date",
+            direction: "desc",
+          },
+          {
+            label: "Oldest date",
+            value: "date-asc",
+            key: "date",
+            direction: "asc",
+          },
+          {
+            label: "Client A-Z",
+            value: "client-asc",
+            key: "client",
+            direction: "asc",
+          },
+          {
+            label: "Status A-Z",
+            value: "status-asc",
+            key: "status",
+            direction: "asc",
+          },
+          {
+            label: "Active first",
+            value: "state-asc",
+            key: "state",
+            direction: "asc",
+          },
+        ]}
         title="Invoices"
       />
     </AppShell>

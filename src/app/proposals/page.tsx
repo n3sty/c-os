@@ -80,7 +80,7 @@ export default async function ProposalsPage({
             })),
           },
           {
-            title: "Year",
+            title: "Date",
             options: Object.entries(yearOptions).map(([label, count]) => ({
               label,
               count,
@@ -97,18 +97,57 @@ export default async function ProposalsPage({
               }),
             ),
           },
+          {
+            title: "State",
+            options: [
+              { label: "Active", count: activeProposals.length },
+              { label: "Archived", count: archivedProposals.length },
+            ],
+          },
         ]}
         filters={[
           { label: "Open", count: openProposals.length, active: true },
           { label: "Missing docs", count: missingDocuments.length },
           { label: "Archived", count: archivedProposals.length },
-          { label: "All", count: activeProposals.length },
+          { label: "All", count: snapshot.proposals.length },
         ]}
         icon={RiFileList3Line}
         records={records}
         selectedFilterGroup={selectedFilterGroup}
         selectedId={selectedId}
         sidebarOpen={sidebarState !== "closed"}
+        sortOptions={[
+          {
+            label: "Newest date",
+            value: "date-desc",
+            key: "date",
+            direction: "desc",
+          },
+          {
+            label: "Oldest date",
+            value: "date-asc",
+            key: "date",
+            direction: "asc",
+          },
+          {
+            label: "Client A-Z",
+            value: "client-asc",
+            key: "client",
+            direction: "asc",
+          },
+          {
+            label: "Status A-Z",
+            value: "status-asc",
+            key: "status",
+            direction: "asc",
+          },
+          {
+            label: "Active first",
+            value: "state-asc",
+            key: "state",
+            direction: "asc",
+          },
+        ]}
         title="Proposals"
       />
     </AppShell>

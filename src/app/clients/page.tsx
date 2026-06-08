@@ -70,6 +70,32 @@ export default async function ClientsPage({ searchParams }: ClientsPageProps) {
         selectedFilterGroup={selectedFilterGroup}
         selectedId={selectedId}
         sidebarOpen={sidebarState !== "closed"}
+        sortOptions={[
+          {
+            label: "Client A-Z",
+            value: "client-asc",
+            key: "client",
+            direction: "asc",
+          },
+          {
+            label: "Company A-Z",
+            value: "company-asc",
+            key: "company",
+            direction: "asc",
+          },
+          {
+            label: "Active first",
+            value: "state-asc",
+            key: "state",
+            direction: "asc",
+          },
+          {
+            label: "Archived first",
+            value: "state-desc",
+            key: "state",
+            direction: "desc",
+          },
+        ]}
         title="Clients"
       />
     </AppShell>

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  RiArchiveLine,
   RiCheckLine,
   RiDraftLine,
   RiSendPlaneLine,
@@ -9,11 +8,7 @@ import {
 } from "@remixicon/react";
 import { useState, useTransition } from "react";
 
-import {
-  archiveInvoiceAction,
-  setInvoiceStatusAction,
-} from "@/app/actions/records";
-import { Button } from "@/components/ui/button";
+import { setInvoiceStatusAction } from "@/app/actions/records";
 import {
   Combobox,
   ComboboxContent,
@@ -91,40 +86,5 @@ export function InvoiceStatusPicker({
         </ComboboxList>
       </ComboboxContent>
     </Combobox>
-  );
-}
-
-export function InvoiceArchiveButton({
-  archived: initialArchived,
-  invoiceId,
-}: {
-  archived: boolean;
-  invoiceId: number;
-}) {
-  const [archived, setArchived] = useState(initialArchived);
-  const [isPending, startTransition] = useTransition();
-
-  return (
-    <Button
-      aria-pressed={archived}
-      disabled={isPending}
-      onClick={(event) => {
-        event.stopPropagation();
-        const nextValue = !archived;
-        setArchived(nextValue);
-        startTransition(async () => {
-          const result = await archiveInvoiceAction(invoiceId, nextValue);
-
-          if (!result.ok) {
-            setArchived(!nextValue);
-          }
-        });
-      }}
-      type="button"
-      variant="pill"
-    >
-      <RiArchiveLine />
-      {archived ? "Archived" : "Archive"}
-    </Button>
   );
 }

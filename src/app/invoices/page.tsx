@@ -35,13 +35,16 @@ export default async function InvoicesPage({
       !["paid", "void"].includes(invoice.status) && !invoice.archived,
   );
   const paidInvoices = snapshot.invoices.filter(
-    (invoice) => invoice.status === "paid",
+    (invoice) => !invoice.archived && invoice.status === "paid",
   );
   const overdueInvoices = snapshot.invoices.filter(
-    (invoice) => invoice.status === "overdue",
+    (invoice) => !invoice.archived && invoice.status === "overdue",
   );
   const archivedInvoices = snapshot.invoices.filter(
     (invoice) => invoice.archived,
+  );
+  const activeInvoices = snapshot.invoices.filter(
+    (invoice) => !invoice.archived,
   );
   const records = await getWorkspaceRecords("invoice", snapshot);
   const formOptions = buildFormOptions(snapshot);
@@ -103,7 +106,7 @@ export default async function InvoicesPage({
           { label: "Paid", count: paidInvoices.length },
           { label: "Overdue", count: overdueInvoices.length },
           { label: "Archived", count: archivedInvoices.length },
-          { label: "All", count: snapshot.invoices.length },
+          { label: "All", count: activeInvoices.length },
         ]}
         icon={RiBillLine}
         records={records}

@@ -146,17 +146,21 @@ export async function setInvoiceStatusAction(
   return { ok: true } satisfies ActionState;
 }
 
-export async function archiveInvoiceAction(
-  invoiceId: number,
+export async function archiveRecordAction(
+  entity: "proposal" | "invoice",
+  recordId: number,
   archived: boolean,
 ) {
-  const result = await archiveInvoice(invoiceId, archived);
+  const result =
+    entity === "proposal"
+      ? await updateProposal(recordId, { archived })
+      : await archiveInvoice(recordId, archived);
 
   if (!result.ok) {
     return { ok: false, message: result.message } satisfies ActionState;
   }
 
-  revalidatePath("/invoices");
+  revalidatePath(entity === "proposal" ? "/proposals" : "/invoices");
   return { ok: true } satisfies ActionState;
 }
 

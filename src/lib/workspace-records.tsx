@@ -5,10 +5,8 @@ import {
   RiReceiptLine,
   RiUser3Line,
 } from "@remixicon/react";
-import {
-  InvoiceArchiveButton,
-  InvoiceStatusPicker,
-} from "@/components/app/invoice-status-controls";
+import { ArchiveRecordButton } from "@/components/app/archive-record-button";
+import { InvoiceStatusPicker } from "@/components/app/invoice-status-controls";
 import {
   type EditableFieldDescriptor,
   RowPill,
@@ -19,6 +17,10 @@ import {
   loadWorkspaceSnapshot,
   type WorkspaceSnapshot,
 } from "@/lib/database";
+import {
+  getInvoiceFilterKeys,
+  getProposalFilterKeys,
+} from "@/lib/record-visibility";
 
 const ARCHIVED_OPTIONS = [
   { label: "Active", value: "false" },
@@ -195,11 +197,7 @@ function buildProposalRecords(snapshot: WorkspaceSnapshot) {
       .filter((c) => !c.archived)
       .map((c) => ({ label: c.company ?? c.fullName, value: String(c.id) }));
 
-    const proposalFilterKeys = ["All"];
-    if (!["accepted", "declined"].includes(proposal.status))
-      proposalFilterKeys.push("Open");
-    if (!proposal.documentLink) proposalFilterKeys.push("Missing docs");
-    if (proposal.archived) proposalFilterKeys.push("Archived");
+    const proposalFilterKeys = getProposalFilterKeys(proposal);
 
     const t = (
       field:
@@ -228,6 +226,14 @@ function buildProposalRecords(snapshot: WorkspaceSnapshot) {
         proposal.archived ? <RowPill key="state">Archived</RowPill> : null,
       ],
       meta: [proposal.date, `${linkedInvoices.length} invoices`],
+      actions: [
+        <ArchiveRecordButton
+          archived={proposal.archived}
+          entity="proposal"
+          key="archive"
+          recordId={proposal.id}
+        />,
+      ],
       detailTitle: proposal.title,
       detailDescription: proposal.description ?? "",
       descriptionSaveTarget: { entityType: "proposal", id: proposal.id },
@@ -359,12 +365,7 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
       })),
     ];
 
-    const invoiceFilterKeys = ["All"];
-    if (!["paid", "void"].includes(invoice.status) && !invoice.archived)
-      invoiceFilterKeys.push("Open");
-    if (invoice.status === "paid") invoiceFilterKeys.push("Paid");
-    if (invoice.status === "overdue") invoiceFilterKeys.push("Overdue");
-    if (invoice.archived) invoiceFilterKeys.push("Archived");
+    const invoiceFilterKeys = getInvoiceFilterKeys(invoice);
 
     const t = (
       field: "documentLink" | "status" | "archived" | "clientId" | "proposalId",
@@ -397,10 +398,11 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
             status={invoice.status}
           />
         ) : null,
-        <InvoiceArchiveButton
+        <ArchiveRecordButton
           archived={invoice.archived}
-          invoiceId={invoice.id}
+          entity="invoice"
           key="archive"
+          recordId={invoice.id}
         />,
       ],
       detailTitle: invoice.invoiceNumber,

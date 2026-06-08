@@ -34,10 +34,14 @@ export default async function ProposalsPage({
     (proposal) => proposal.archived,
   );
   const missingDocuments = snapshot.proposals.filter(
-    (proposal) => !proposal.documentLink,
+    (proposal) => !proposal.archived && !proposal.documentLink,
   );
   const openProposals = snapshot.proposals.filter(
-    (proposal) => !["accepted", "declined"].includes(proposal.status),
+    (proposal) =>
+      !proposal.archived && !["accepted", "declined"].includes(proposal.status),
+  );
+  const activeProposals = snapshot.proposals.filter(
+    (proposal) => !proposal.archived,
   );
   const clientOptions = snapshot.proposals.reduce<Record<string, number>>(
     (clients, proposal) => {
@@ -98,7 +102,7 @@ export default async function ProposalsPage({
           { label: "Open", count: openProposals.length, active: true },
           { label: "Missing docs", count: missingDocuments.length },
           { label: "Archived", count: archivedProposals.length },
-          { label: "All", count: snapshot.proposals.length },
+          { label: "All", count: activeProposals.length },
         ]}
         icon={RiFileList3Line}
         records={records}

@@ -7,10 +7,13 @@ import {
   RiLinksLine,
 } from "@remixicon/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef } from "react";
 
+import {
+  ActionTooltip,
+  type ActionTooltipHandle,
+} from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 type Entity = "client" | "proposal" | "invoice" | "expense";
 
@@ -21,14 +24,12 @@ type Props = {
 };
 
 export function DetailSidebarActions({ entity, recordId, basePath }: Props) {
-  const [copied, setCopied] = useState(false);
+  const copyTooltipRef = useRef<ActionTooltipHandle>(null);
   const router = useRouter();
 
   function handleCopyId() {
-    navigator.clipboard.writeText(recordId).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
+    navigator.clipboard.writeText(recordId);
+    copyTooltipRef.current?.complete();
   }
 
   function handleDuplicate() {
@@ -37,15 +38,21 @@ export function DetailSidebarActions({ entity, recordId, basePath }: Props) {
 
   return (
     <div className="mb-2 flex justify-end gap-1">
-      <Button
-        aria-label={copied ? "ID copied" : "Copy record ID"}
-        className="size-8 rounded-full bg-muted/30"
-        onClick={handleCopyId}
-        size="icon"
-        variant="ghost"
+      <ActionTooltip
+        completedLabel="Copied ID"
+        label="Copy ID"
+        ref={copyTooltipRef}
       >
-        <RiLinksLine className={cn(copied && "text-foreground")} />
-      </Button>
+        <Button
+          aria-label="Copy record ID"
+          className="size-8 rounded-full bg-muted/30"
+          onClick={handleCopyId}
+          size="icon"
+          variant="ghost"
+        >
+          <RiLinksLine />
+        </Button>
+      </ActionTooltip>
       <Button
         aria-label="Duplicate record"
         className="size-8 rounded-full bg-muted/30"

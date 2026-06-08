@@ -15,6 +15,11 @@ import {
   updateInvoice,
   updateProposal,
 } from "@/lib/database";
+import {
+  type ExpenseCategory,
+  isExpenseCategory,
+} from "@/lib/expense-category";
+import { parseMoney } from "@/lib/money";
 
 type ActionState = {
   ok: boolean;
@@ -111,15 +116,38 @@ export async function createRecordAction(
     }
 
     case "expense": {
-      const amount = asNumber(formData.get("amount"));
+      const date = asString(formData.get("date"));
+      const supplier = asString(formData.get("supplier"));
+      const amount = parseMoney(asString(formData.get("amount")));
+      const vatAmount = parseMoney(asString(formData.get("vatAmount")));
+      const category = asString(formData.get("category"));
 
-      if (amount === null) {
+      if (!date) {
+        return { ok: false, message: "Date is required." };
+      }
+
+      if (!supplier) {
+        return { ok: false, message: "Supplier is required." };
+      }
+
+      if (amount === null || amount < 0) {
         return { ok: false, message: "Amount is required." };
       }
 
+      if (vatAmount === null || vatAmount < 0) {
+        return { ok: false, message: "VAT amount is required." };
+      }
+
+      if (!isExpenseCategory(category)) {
+        return { ok: false, message: "Category is required." };
+      }
+
       const result = await createExpense({
+        date,
+        supplier,
         amount,
-        description: asOptionalString(formData.get("expenseTitle")),
+        vatAmount,
+        category,
       });
 
       if (!result.ok) {
@@ -147,20 +175,28 @@ export async function setInvoiceStatusAction(
 }
 
 export async function archiveRecordAction(
-  entity: "proposal" | "invoice",
+  entity: "proposal" | "invoice" | "expense",
   recordId: number,
   archived: boolean,
 ) {
   const result =
     entity === "proposal"
       ? await updateProposal(recordId, { archived })
-      : await archiveInvoice(recordId, archived);
+      : entity === "invoice"
+        ? await archiveInvoice(recordId, archived)
+        : await updateExpense(recordId, { archived });
 
   if (!result.ok) {
     return { ok: false, message: result.message } satisfies ActionState;
   }
 
-  revalidatePath(entity === "proposal" ? "/proposals" : "/invoices");
+  revalidatePath(
+    entity === "proposal"
+      ? "/proposals"
+      : entity === "invoice"
+        ? "/invoices"
+        : "/expenses",
+  );
   return { ok: true } satisfies ActionState;
 }
 
@@ -186,7 +222,17 @@ export type UpdateRecordTarget =
       id: number;
       field: "documentLink" | "status" | "archived" | "clientId" | "proposalId";
     }
-  | { entity: "expense"; id: number; field: "description" | "amount" };
+  | {
+      entity: "expense";
+      id: number;
+      field:
+        | "date"
+        | "supplier"
+        | "amount"
+        | "vatAmount"
+        | "category"
+        | "archived";
+    };
 
 export async function updateRecordFieldAction(
   target: UpdateRecordTarget,
@@ -245,10 +291,37 @@ export async function updateRecordFieldAction(
       return { ok: true };
     }
     case "expense": {
+      if (target.field === "amount" || target.field === "vatAmount") {
+        const parsed = parseMoney(value);
+        if (parsed === null || parsed < 0) {
+          return { ok: false, message: "Enter a valid money amount." };
+        }
+
+        const result = await updateExpense(target.id, {
+          [target.field]: parsed,
+        });
+        if (!result.ok) return { ok: false, message: result.message };
+        revalidatePath("/expenses");
+        return { ok: true };
+      }
+
+      if (target.field === "category" && !isExpenseCategory(value)) {
+        return { ok: false, message: "Select a valid category." };
+      }
+
+      if (
+        (target.field === "date" || target.field === "supplier") &&
+        !value.trim()
+      ) {
+        return { ok: false, message: `${target.field} is required.` };
+      }
+
       const input =
-        target.field === "amount"
-          ? { amount: Number(value) }
-          : { description: value };
+        target.field === "archived"
+          ? { archived: value === "true" }
+          : target.field === "category"
+            ? { category: value as ExpenseCategory }
+            : { [target.field]: value };
       const result = await updateExpense(target.id, input);
       if (!result.ok) return { ok: false, message: result.message };
       revalidatePath("/expenses");
@@ -276,7 +349,7 @@ export async function updateRecordDescriptionAction(
       return { ok: true };
     }
     case "expense": {
-      const result = await updateExpense(id, { description });
+      const result = await updateExpense(id, { supplier: description });
       if (!result.ok) return { ok: false, message: result.message };
       revalidatePath("/expenses");
       return { ok: true };

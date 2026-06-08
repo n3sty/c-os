@@ -35,6 +35,7 @@ import {
   useDialogPopupContainer,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import {
   type CreationConfig,
   type CreationField,
@@ -63,6 +64,8 @@ function getFieldIcon(field: CreationField) {
       return RiMailLine;
     case "date":
       return RiCalendarLine;
+    case "money":
+      return RiPriceTag3Line;
     case "url":
       return RiFileList3Line;
     default:
@@ -75,7 +78,9 @@ function getFieldIcon(field: CreationField) {
 function getPrimaryField(fields: CreationField[]) {
   return (
     fields.find((field) =>
-      ["projectOrClientName", "title", "invoiceNumber"].includes(field.name),
+      ["projectOrClientName", "title", "invoiceNumber", "supplier"].includes(
+        field.name,
+      ),
     ) ?? fields[0]
   );
 }
@@ -437,21 +442,23 @@ function CreateRecordCanvas({
         </div>
       )}
 
-      <div className="mt-7 border-border/60 border-t pt-5">
-        <textarea
-          aria-label="Description"
-          className="h-28 w-full resize-none bg-transparent text-base leading-7 text-foreground outline-none placeholder:text-muted-foreground"
-          name="description"
-          placeholder="Write a description, brief, or collect ideas..."
-        />
-      </div>
+      {fields.some((field) => field.name === "title") && (
+        <div className="mt-7 border-border/60 border-t pt-5">
+          <textarea
+            aria-label="Description"
+            className="h-28 w-full resize-none bg-transparent text-base leading-7 text-foreground outline-none placeholder:text-muted-foreground"
+            name="description"
+            placeholder="Write a description, brief, or collect ideas..."
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 function CreatePrimaryField({ field }: { field: CreationField }) {
   const inputId = `create-${field.name}`;
-  const value = field.readOnly ? field.placeholder : undefined;
+  const value = field.value ?? (field.readOnly ? field.placeholder : undefined);
 
   return (
     <Input
@@ -470,7 +477,7 @@ function CreatePrimaryField({ field }: { field: CreationField }) {
 
 function CreateSecondaryField({ field }: { field: CreationField }) {
   const inputId = `create-${field.name}`;
-  const value = field.readOnly ? field.placeholder : undefined;
+  const value = field.value ?? (field.readOnly ? field.placeholder : undefined);
 
   return (
     <Input
@@ -504,9 +511,10 @@ function CreateMetadataField({
   const inputId = `create-${field.name}`;
   const readOnlyValue = field.readOnly ? field.placeholder : undefined;
   const defaultValue =
-    field.type === "date" && field.placeholder
+    field.value ??
+    (field.type === "date" && field.placeholder
       ? field.placeholder
-      : readOnlyValue;
+      : readOnlyValue);
   const shortcutKey = FIELD_SHORTCUTS[field.name];
   const fieldName = field.name;
   const handleRegister = useCallback(
@@ -557,19 +565,31 @@ function CreateMetadataField({
     >
       <Icon className="shrink-0" size={14} />
       <span className="sr-only">{field.label}</span>
-      <Input
-        className={cn(
-          "h-7 min-w-0 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0",
-          field.readOnly ? "w-32" : "w-44",
-        )}
-        defaultValue={defaultValue}
-        id={inputId}
-        name={field.name}
-        placeholder={field.placeholder}
-        readOnly={field.readOnly}
-        required={field.required}
-        type={field.type ?? "text"}
-      />
+      {field.type === "money" ? (
+        <MoneyInput
+          className="h-7 min-w-0 w-44 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
+          defaultValue={defaultValue}
+          id={inputId}
+          name={field.name}
+          placeholder={field.placeholder}
+          readOnly={field.readOnly}
+          required={field.required}
+        />
+      ) : (
+        <Input
+          className={cn(
+            "h-7 min-w-0 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0",
+            field.readOnly ? "w-32" : "w-44",
+          )}
+          defaultValue={defaultValue}
+          id={inputId}
+          name={field.name}
+          placeholder={field.placeholder}
+          readOnly={field.readOnly}
+          required={field.required}
+          type={field.type ?? "text"}
+        />
+      )}
     </label>
   );
 }

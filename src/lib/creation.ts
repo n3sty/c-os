@@ -5,6 +5,7 @@ import type {
   SeedProposal,
   SeedProposalStatus,
 } from "@/lib/database/seed-data";
+import { expenseCategoryOptions } from "@/lib/expense-category";
 import { getNextTrackedNumber } from "@/lib/numbering";
 
 export const creationTargets = [
@@ -20,7 +21,7 @@ export type SelectOption = { label: string; value: string };
 export type CreationField = {
   name: string;
   label: string;
-  type?: "text" | "email" | "date" | "url";
+  type?: "text" | "email" | "date" | "url" | "money";
   placeholder?: string;
   value?: string;
   required?: boolean;
@@ -241,16 +242,39 @@ export function getCreationConfig(
         submitLabel: "Create expense",
         fields: [
           {
-            name: "expenseTitle",
-            label: "Expense title",
-            placeholder: "Client workshop travel",
+            name: "supplier",
+            label: "Supplier",
+            placeholder: "Supplier name",
             required: true,
+          },
+          {
+            name: "date",
+            label: "Date",
+            type: "date",
+            required: true,
+            placeholder: today(),
           },
           {
             name: "amount",
             label: "Amount",
+            type: "money",
             placeholder: "186.40",
             required: true,
+          },
+          {
+            name: "vatAmount",
+            label: "VAT amount",
+            type: "money",
+            placeholder: "0.00",
+            value: "0.00",
+            required: true,
+          },
+          {
+            name: "category",
+            label: "Category",
+            required: true,
+            value: "other",
+            options: [...expenseCategoryOptions],
           },
         ],
       };
@@ -448,16 +472,46 @@ export function getEditConfig({
         deleteLabel: "Delete expense",
         fields: [
           {
-            name: "expenseTitle",
-            label: "Expense title",
+            name: "supplier",
+            label: "Supplier",
             required: true,
-            value: expense.description,
+            value: expense.supplier,
+          },
+          {
+            name: "date",
+            label: "Date",
+            type: "date",
+            required: true,
+            value: expense.date,
+            placeholder: expense.date,
           },
           {
             name: "amount",
             label: "Amount",
+            type: "money",
             required: true,
             value: String(expense.amount),
+          },
+          {
+            name: "vatAmount",
+            label: "VAT amount",
+            type: "money",
+            required: true,
+            value: String(expense.vatAmount),
+          },
+          {
+            name: "category",
+            label: "Category",
+            required: true,
+            value: expense.category,
+            options: [...expenseCategoryOptions],
+          },
+          {
+            name: "archived",
+            label: "State",
+            options: getArchivedOptions(expense.archived),
+            required: true,
+            value: String(expense.archived),
           },
         ],
       };

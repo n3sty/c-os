@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/action-tooltip";
 import { Button } from "@/components/ui/button";
 
-type ArchiveEntity = "proposal" | "invoice";
+type ArchiveEntity = "proposal" | "invoice" | "expense";
 
 export function ArchiveRecordButton({
   archived: initialArchived,

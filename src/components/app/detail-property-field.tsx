@@ -18,6 +18,7 @@ import {
 import { useDetailProperties } from "@/components/app/detail-properties-context";
 import { useKeyboardShortcut } from "@/components/app/keyboard-shortcut-provider";
 import { Calendar } from "@/components/ui/calendar";
+import { MoneyInput } from "@/components/ui/money-input";
 import {
   Popover,
   PopoverContent,
@@ -115,6 +116,55 @@ export const PropertyTextField = forwardRef<
             e.stopPropagation();
             properties.releaseFieldFocus();
             break;
+        }
+      }}
+    />
+  );
+});
+
+type PropertyMoneyFieldProps = {
+  value: string;
+  target: UpdateRecordTarget;
+  shortcutKey?: string;
+};
+
+export const PropertyMoneyField = forwardRef<
+  PropertyFieldHandle,
+  PropertyMoneyFieldProps
+>(function PropertyMoneyField({ value, target, shortcutKey }, ref) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedSave = useSaveField(target);
+  const properties = useDetailProperties();
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
+
+  useKeyboardShortcut({
+    id: `detail-field-${properties.shortcutScope}-${target.entity}-${target.id}-${target.field}`,
+    keys: { key: shortcutKey ?? "" },
+    enabled: Boolean(shortcutKey),
+    allowInEditable: false,
+    isActive: () =>
+      properties.isShortcutActive() &&
+      (properties.shortcutScope === "floating" ||
+        inputRef.current?.offsetParent !== null),
+    priority: 80,
+    handler: () => properties.runFieldShortcut(() => inputRef.current?.focus()),
+  });
+
+  return (
+    <MoneyInput
+      ref={inputRef}
+      aria-label={String(target.field)}
+      className="min-w-0 w-full max-w-44 rounded border-0 bg-transparent px-1 text-right text-sm font-medium shadow-none hover:bg-muted/30 hover:text-foreground focus:bg-muted/40 focus:text-foreground focus-visible:ring-0"
+      defaultValue={value}
+      onChange={(event) => debouncedSave(event.currentTarget.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          properties.releaseFieldFocus();
         }
       }}
     />

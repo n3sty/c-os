@@ -2,6 +2,7 @@ import type { VariantProps } from "class-variance-authority";
 
 import type { badgeVariants } from "@/components/ui/badge";
 import type { invoiceStatusEnum } from "@/lib/database/schema";
+import type { ExpenseCategory } from "@/lib/expense-category";
 import { formatTrackedNumber } from "@/lib/numbering";
 
 type BadgeVariant = VariantProps<typeof badgeVariants>["variant"];
@@ -42,8 +43,12 @@ export type SeedInvoice = {
 
 export type SeedExpense = {
   id: number;
-  description: string;
+  date: string;
+  supplier: string;
   amount: number;
+  vatAmount: number;
+  category: ExpenseCategory;
+  archived: boolean;
 };
 
 export type SeedNotificationTarget = {
@@ -194,23 +199,39 @@ export const seedInvoices: SeedInvoice[] = [
 export const seedExpenses: SeedExpense[] = [
   {
     id: 1,
-    description: "Figma professional plan",
+    date: "2026-01-08",
+    supplier: "Figma",
     amount: 24,
+    vatAmount: 4.17,
+    category: "software",
+    archived: false,
   },
   {
     id: 2,
-    description: "Client workshop travel",
+    date: "2026-02-14",
+    supplier: "NS International",
     amount: 186.4,
+    vatAmount: 16.96,
+    category: "travel",
+    archived: false,
   },
   {
     id: 3,
-    description: "Domain renewal",
+    date: "2026-03-02",
+    supplier: "Cloudflare",
     amount: 19.99,
+    vatAmount: 3.47,
+    category: "software",
+    archived: false,
   },
   {
     id: 4,
-    description: "Bookkeeping handoff review",
+    date: "2026-04-22",
+    supplier: "Ledgerworks",
     amount: 92.5,
+    vatAmount: 16.05,
+    category: "professional_services",
+    archived: false,
   },
 ];
 

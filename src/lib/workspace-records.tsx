@@ -17,7 +17,10 @@ import {
   loadWorkspaceSnapshot,
   type WorkspaceSnapshot,
 } from "@/lib/database";
-import { getExpenseCategory } from "@/lib/expense-category";
+import {
+  expenseCategoryOptions,
+  getExpenseCategoryLabel,
+} from "@/lib/expense-category";
 import {
   getInvoiceFilterKeys,
   getProposalFilterKeys,
@@ -545,70 +548,121 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
 
 function buildExpenseRecords(snapshot: WorkspaceSnapshot) {
   return snapshot.expenses.map((expense) => {
-    const category = getExpenseCategory(expense.description);
-    const amountBand =
-      expense.amount < 50
-        ? "Under $50"
-        : expense.amount < 150
-          ? "$50-$149"
-          : "$150+";
+    const category = getExpenseCategoryLabel(expense.category);
 
-    const expenseFilterKeys = ["All"];
-    if (expense.amount >= 150) expenseFilterKeys.push("Needs review");
-    else expenseFilterKeys.push("Export ready");
+    const expenseFilterKeys = ["All", expense.archived ? "Archived" : "Active"];
 
     const t = (
-      field: "description" | "amount",
+      field:
+        | "date"
+        | "supplier"
+        | "amount"
+        | "vatAmount"
+        | "category"
+        | "archived",
     ): EditableFieldDescriptor["target"] =>
       ({ entity: "expense", id: expense.id, field }) as const;
 
     return {
       id: String(expense.id),
       entity: "expense" as const,
-      archived: false,
+      archived: expense.archived,
       group: category,
       filterKeys: expenseFilterKeys,
       filterAttributes: {
         Category: category,
+        Date: expense.date.slice(0, 4),
+        State: expense.archived ? "Archived" : "Active",
       },
       sortValues: {
         amount: expense.amount,
         category,
+        date: expense.date,
+        supplier: expense.supplier,
+        state: expense.archived ? 1 : 0,
       },
       eyebrow: `EXP-${String(expense.id).padStart(3, "0")}`,
-      title: expense.description,
+      title: expense.supplier,
       subtitle: category,
-      tags: [<RowPill key="amount">{formatCurrency(expense.amount)}</RowPill>],
-      detailTitle: expense.description,
-      detailDescription: expense.description,
-      descriptionSaveTarget: { entityType: "expense", id: expense.id },
+      tags: [
+        <RowPill key="amount">{formatCurrency(expense.amount)}</RowPill>,
+        expense.archived ? <RowPill key="state">Archived</RowPill> : null,
+      ],
+      meta: [expense.date, `VAT ${formatCurrency(expense.vatAmount)}`],
+      actions: [
+        <ArchiveRecordButton
+          archived={expense.archived}
+          entity="expense"
+          key="archive"
+          recordId={expense.id}
+        />,
+      ],
+      detailTitle: expense.supplier,
+      detailDescription: `Expense recorded on ${expense.date}.`,
       detailSections: [
         {
           title: "Properties",
           items: [
             {
+              label: "State",
+              value: String(expense.archived),
+              editable: {
+                type: "select",
+                target: t("archived"),
+                options: ARCHIVED_OPTIONS,
+                shortcutKey: "a",
+              } satisfies EditableFieldDescriptor,
+            },
+            {
+              label: "Date",
+              value: expense.date,
+              editable: {
+                type: "date",
+                target: t("date"),
+                shortcutKey: "d",
+              } satisfies EditableFieldDescriptor,
+            },
+            {
+              label: "Supplier",
+              value: expense.supplier,
+              editable: {
+                type: "text",
+                target: t("supplier"),
+                shortcutKey: "s",
+              } satisfies EditableFieldDescriptor,
+            },
+            {
               label: "Amount",
               value: String(expense.amount),
               editable: {
-                type: "text",
+                type: "money",
                 target: t("amount"),
-                inputType: "number",
                 shortcutKey: "m",
               } satisfies EditableFieldDescriptor,
             },
-            { label: "Category", value: category },
-            { label: "Band", value: amountBand },
+            {
+              label: "VAT amount",
+              value: String(expense.vatAmount),
+              editable: {
+                type: "money",
+                target: t("vatAmount"),
+                shortcutKey: "v",
+              } satisfies EditableFieldDescriptor,
+            },
+            {
+              label: "Category",
+              value: expense.category,
+              editable: {
+                type: "select",
+                target: t("category"),
+                options: [...expenseCategoryOptions],
+                shortcutKey: "c",
+              } satisfies EditableFieldDescriptor,
+            },
             {
               label: "Expense #",
               value: `EXP-${String(expense.id).padStart(3, "0")}`,
             },
-          ],
-        },
-        {
-          title: "Export",
-          items: [
-            { label: "Scope", value: "Bookkeeping export" },
-            { label: "State", value: "Included" },
           ],
         },
       ],

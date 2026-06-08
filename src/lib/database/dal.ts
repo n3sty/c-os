@@ -16,6 +16,7 @@ import {
   seedInvoices,
   seedProposals,
 } from "@/lib/database/seed-data";
+import type { ExpenseCategory } from "@/lib/expense-category";
 import { getNextTrackedNumber } from "@/lib/numbering";
 
 export type WorkspaceSnapshot = {
@@ -74,8 +75,12 @@ export type CreateInvoiceInput = {
 export type UpdateInvoiceInput = Partial<CreateInvoiceInput>;
 
 export type CreateExpenseInput = {
+  date: string;
+  supplier: string;
   amount: number;
-  description?: string | null;
+  vatAmount: number;
+  category: ExpenseCategory;
+  archived?: boolean;
 };
 
 export type UpdateExpenseInput = Partial<CreateExpenseInput>;
@@ -120,8 +125,12 @@ function mapInvoice(row: typeof invoices.$inferSelect): SeedInvoice {
 function mapExpense(row: typeof expenses.$inferSelect): SeedExpense {
   return {
     id: row.id,
+    date: row.date,
+    supplier: row.supplier,
     amount: row.amount,
-    description: row.description ?? "",
+    vatAmount: row.vat_amount,
+    category: row.category,
+    archived: row.archived,
   };
 }
 
@@ -475,8 +484,12 @@ export async function createExpense(
     const [row] = await drib
       .insert(expenses)
       .values({
+        date: input.date,
+        supplier: input.supplier,
         amount: input.amount,
-        description: input.description ?? null,
+        vat_amount: input.vatAmount,
+        category: input.category,
+        archived: input.archived ?? false,
       })
       .returning();
 
@@ -502,8 +515,12 @@ export async function updateExpense(
     const [row] = await drib
       .update(expenses)
       .set({
+        date: input.date,
+        supplier: input.supplier,
         amount: input.amount,
-        description: input.description,
+        vat_amount: input.vatAmount,
+        category: input.category,
+        archived: input.archived,
       })
       .where(eq(expenses.id, id))
       .returning();

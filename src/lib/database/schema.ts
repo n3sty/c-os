@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   numeric,
@@ -21,6 +22,16 @@ export const proposalStatusEnum = pgEnum("proposal_status", [
   "sent",
   "accepted",
   "declined",
+]);
+
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "software",
+  "travel",
+  "office",
+  "professional_services",
+  "marketing",
+  "meals",
+  "other",
 ]);
 
 export const clients = pgTable("clients", {
@@ -56,6 +67,12 @@ export const invoices = pgTable("invoices", {
 
 export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
-  amount: numeric({ mode: "number" }).notNull(),
-  description: text(),
+  date: varchar().notNull().default(sql`CURRENT_DATE::text`),
+  supplier: text().notNull(),
+  amount: numeric({ mode: "number", precision: 12, scale: 2 }).notNull(),
+  vat_amount: numeric({ mode: "number", precision: 12, scale: 2 })
+    .notNull()
+    .default(0),
+  category: expenseCategoryEnum().notNull().default("other"),
+  archived: boolean().notNull().default(false),
 });

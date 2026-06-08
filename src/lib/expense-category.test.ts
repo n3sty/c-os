@@ -1,16 +1,29 @@
 import { describe, expect, test } from "bun:test";
-import { getExpenseCategory } from "@/lib/expense-category";
+import {
+  expenseCategoryOptions,
+  getExpenseCategoryLabel,
+  isExpenseCategory,
+} from "@/lib/expense-category";
 
 describe("expense categories", () => {
-  test("classifies the current expense descriptions", () => {
-    expect(getExpenseCategory("Figma professional plan")).toBe("Software");
-    expect(getExpenseCategory("Client workshop travel")).toBe("Travel");
-    expect(getExpenseCategory("Bookkeeping handoff review")).toBe(
+  test("formats stored category values", () => {
+    expect(getExpenseCategoryLabel("software")).toBe("Software");
+    expect(getExpenseCategoryLabel("professional_services")).toBe(
       "Professional services",
     );
   });
 
-  test("uses Other when no category keyword matches", () => {
-    expect(getExpenseCategory("Office coffee")).toBe("Other");
+  test("offers every supported category", () => {
+    expect(expenseCategoryOptions.map((option) => option.value)).toEqual([
+      "software",
+      "travel",
+      "office",
+      "professional_services",
+      "marketing",
+      "meals",
+      "other",
+    ]);
+    expect(isExpenseCategory("meals")).toBe(true);
+    expect(isExpenseCategory("unknown")).toBe(false);
   });
 });

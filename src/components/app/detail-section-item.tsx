@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import {
   PropertyDateField,
+  PropertyMoneyField,
   PropertySelectField,
   PropertyTextField,
 } from "@/components/app/detail-property-field";
@@ -46,6 +47,16 @@ function renderEditableField(
   if (descriptor.type === "date") {
     return (
       <PropertyDateField
+        shortcutKey={descriptor.shortcutKey}
+        target={descriptor.target}
+        value={value}
+      />
+    );
+  }
+
+  if (descriptor.type === "money") {
+    return (
+      <PropertyMoneyField
         shortcutKey={descriptor.shortcutKey}
         target={descriptor.target}
         value={value}

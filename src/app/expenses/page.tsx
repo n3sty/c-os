@@ -3,7 +3,7 @@ import { RiReceiptLine } from "@remixicon/react";
 import { AppShell } from "@/components/app/app-shell";
 import { RecordWorkspace } from "@/components/app/record-workspace";
 import { formatCurrency, loadWorkspaceSnapshot } from "@/lib/database";
-import { getExpenseCategory } from "@/lib/expense-category";
+import { getExpenseCategoryLabel } from "@/lib/expense-category";
 import { getWorkspaceRecords } from "@/lib/workspace-records";
 
 type ExpensesPageProps = {
@@ -33,20 +33,24 @@ export default async function ExpensesPage({
   const records = await getWorkspaceRecords("expense", snapshot);
   const categories = snapshot.expenses.reduce<Record<string, number>>(
     (counts, expense) => {
-      const category = getExpenseCategory(expense.description);
+      const category = getExpenseCategoryLabel(expense.category);
       counts[category] = (counts[category] ?? 0) + 1;
       return counts;
     },
     {},
   );
-  const largerExpenses = snapshot.expenses.filter(
-    (expense) => expense.amount >= 150,
+  const archivedExpenses = snapshot.expenses.filter(
+    (expense) => expense.archived,
+  );
+  const activeExpenses = snapshot.expenses.filter(
+    (expense) => !expense.archived,
   );
 
   return (
     <AppShell>
       <RecordWorkspace
         basePath="/expenses"
+        creationTarget="expense"
         description={`${formatCurrency(totalAmount)} logged for bookkeeping export.`}
         emptyLabel="No expenses logged yet."
         filterGroups={[
@@ -57,10 +61,18 @@ export default async function ExpensesPage({
               count,
             })),
           },
+          {
+            title: "State",
+            options: [
+              { label: "Active", count: activeExpenses.length },
+              { label: "Archived", count: archivedExpenses.length },
+            ],
+          },
         ]}
         filters={[
           { label: "All", count: snapshot.expenses.length, active: true },
-          { label: "Needs review", count: largerExpenses.length },
+          { label: "Active", count: activeExpenses.length },
+          { label: "Archived", count: archivedExpenses.length },
         ]}
         icon={RiReceiptLine}
         records={records}
@@ -68,6 +80,18 @@ export default async function ExpensesPage({
         selectedId={selectedId}
         sidebarOpen={sidebarState !== "closed"}
         sortOptions={[
+          {
+            label: "Newest date",
+            value: "date-desc",
+            key: "date",
+            direction: "desc",
+          },
+          {
+            label: "Supplier A-Z",
+            value: "supplier-asc",
+            key: "supplier",
+            direction: "asc",
+          },
           {
             label: "Category A-Z",
             value: "category-asc",

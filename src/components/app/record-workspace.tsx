@@ -57,7 +57,8 @@ export type EditableFieldDescriptor =
       options: { label: string; value: string }[];
       shortcutKey?: string;
     }
-  | { type: "date"; target: UpdateRecordTarget; shortcutKey?: string };
+  | { type: "date"; target: UpdateRecordTarget; shortcutKey?: string }
+  | { type: "money"; target: UpdateRecordTarget; shortcutKey?: string };
 
 type WorkspaceDetailSection = {
   title: string;

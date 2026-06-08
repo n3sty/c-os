@@ -1,29 +1,27 @@
-export function getExpenseCategory(description: string) {
-  const normalized = description.toLowerCase();
+import type { expenseCategoryEnum } from "@/lib/database/schema";
 
-  if (
-    ["travel", "train", "flight", "hotel", "taxi", "transport"].some(
-      (keyword) => normalized.includes(keyword),
-    )
-  ) {
-    return "Travel";
-  }
+export type ExpenseCategory = (typeof expenseCategoryEnum.enumValues)[number];
 
-  if (
-    ["software", "figma", "domain", "hosting", "subscription", "plan"].some(
-      (keyword) => normalized.includes(keyword),
-    )
-  ) {
-    return "Software";
-  }
+export const expenseCategoryOptions = [
+  { label: "Software", value: "software" },
+  { label: "Travel", value: "travel" },
+  { label: "Office", value: "office" },
+  { label: "Professional services", value: "professional_services" },
+  { label: "Marketing", value: "marketing" },
+  { label: "Meals", value: "meals" },
+  { label: "Other", value: "other" },
+] as const satisfies ReadonlyArray<{
+  label: string;
+  value: ExpenseCategory;
+}>;
 
-  if (
-    ["bookkeeping", "accounting", "legal", "consult"].some((keyword) =>
-      normalized.includes(keyword),
-    )
-  ) {
-    return "Professional services";
-  }
+export function getExpenseCategoryLabel(category: ExpenseCategory) {
+  return (
+    expenseCategoryOptions.find((option) => option.value === category)?.label ??
+    category
+  );
+}
 
-  return "Other";
+export function isExpenseCategory(value: string): value is ExpenseCategory {
+  return expenseCategoryOptions.some((option) => option.value === value);
 }

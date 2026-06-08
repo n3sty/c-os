@@ -51,7 +51,17 @@ async function main() {
     })),
   );
 
-  await drib.insert(expenses).values(seedExpenses);
+  await drib.insert(expenses).values(
+    seedExpenses.map((expense) => ({
+      id: expense.id,
+      date: expense.date,
+      supplier: expense.supplier,
+      amount: expense.amount,
+      vat_amount: expense.vatAmount,
+      category: expense.category,
+      archived: expense.archived,
+    })),
+  );
 
   await drib.execute(
     sql`select setval('clients_id_seq', ${seedClients.length}, true)`,

@@ -95,7 +95,7 @@ export const PropertyTextField = forwardRef<
     <input
       ref={inputRef}
       aria-label={String(target.field)}
-      className="w-full max-w-44 rounded bg-transparent px-1 text-right text-sm font-medium outline-none transition-colors placeholder:text-muted-foreground/50 hover:bg-muted/30 hover:text-foreground focus:bg-muted/40 focus:text-foreground"
+      className="min-w-0 w-full max-w-44 rounded bg-transparent px-1 text-right text-sm font-medium outline-none transition-colors placeholder:text-muted-foreground/50 hover:bg-muted/30 hover:text-foreground focus:bg-muted/40 focus:text-foreground"
       placeholder={placeholder}
       type={type}
       value={value}
@@ -208,7 +208,7 @@ export const PropertySelectField = forwardRef<
       <PopoverTrigger asChild>
         <button
           ref={triggerRef}
-          className="max-w-44 truncate rounded px-1 text-right text-sm font-medium outline-none transition-colors hover:bg-muted/30 hover:text-foreground focus:bg-muted/40 focus:text-foreground"
+          className="min-w-0 max-w-44 truncate rounded px-1 text-right text-sm font-medium outline-none transition-colors hover:bg-muted/30 hover:text-foreground focus:bg-muted/40 focus:text-foreground"
           type="button"
           onKeyDown={handleKeyDown}
         >

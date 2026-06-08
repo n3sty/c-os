@@ -17,6 +17,7 @@ import {
 import { DetailSidebarActions } from "@/components/app/detail-sidebar-actions";
 import { DetailTopbarControls } from "@/components/app/detail-topbar-controls";
 import type { EditableDescriptionSaveTarget } from "@/components/app/editable-description";
+import { FloatingDetailProperties } from "@/components/app/floating-detail-properties";
 import { GatherView } from "@/components/app/gather-view";
 import { RecordDetail } from "@/components/app/record-detail";
 import { Badge } from "@/components/ui/badge";
@@ -244,7 +245,9 @@ export function DetailSurface({
   return (
     <div
       className={cn(
-        "grid min-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card",
+        "@container/detail relative isolate grid min-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card",
+        variant === "page" &&
+          "after:pointer-events-none after:absolute after:inset-0 after:z-[70] after:rounded-[inherit] after:ring-1 after:ring-black/80 after:ring-inset",
         variant === "panel" && "h-full min-h-0 rounded-none bg-transparent",
       )}
     >
@@ -261,15 +264,19 @@ export function DetailSurface({
         variant={variant}
       />
 
-      <div className="grid min-h-0 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid min-h-0 @6xl/detail:grid-cols-[minmax(0,1fr)_320px]">
         <main className="min-w-0 overflow-auto">
           <RecordDetail record={record} />
         </main>
 
-        <aside className="hidden bg-card/70 xl:block">
+        <aside className="hidden min-w-0 overflow-auto bg-card/70 @6xl/detail:block">
           <DetailSidebar basePath={basePath} record={record} />
         </aside>
       </div>
+
+      <FloatingDetailProperties>
+        <DetailSectionCards record={record} solid />
+      </FloatingDetailProperties>
     </div>
   );
 }
@@ -307,7 +314,7 @@ function DetailTopbar({
       <div className="flex min-w-0 items-center gap-2">
         <Button
           asChild
-          className="size-7 rounded-full xl:hidden"
+          className="size-7 rounded-full @6xl/detail:hidden"
           size="icon"
           variant="ghost"
         >
@@ -316,12 +323,14 @@ function DetailTopbar({
           </Link>
         </Button>
         <Link
-          className="hidden min-w-0 items-center gap-2 font-medium transition-colors hover:text-foreground sm:flex"
+          className="hidden min-w-0 items-center gap-2 font-medium transition-colors hover:text-foreground @lg/detail:flex"
           href={backHref}
         >
           <span className="truncate">{title}</span>
         </Link>
-        <span className="hidden text-muted-foreground/60 sm:inline">›</span>
+        <span className="hidden text-muted-foreground/60 @lg/detail:inline">
+          ›
+        </span>
         <Icon className="shrink-0" size={14} />
         <span className="truncate font-medium text-foreground">
           {record.eyebrow ?? record.detailTitle}
@@ -336,7 +345,7 @@ function DetailTopbar({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        <span className="hidden tabular-nums sm:inline">
+        <span className="hidden tabular-nums @lg/detail:inline">
           {position} / {total}
         </span>
         <Button
@@ -361,7 +370,7 @@ function DetailTopbar({
             <RiArrowUpLine />
           </Link>
         </Button>
-        <span className="mx-1 hidden h-5 w-px bg-border/60 sm:block" />
+        <span className="mx-1 hidden h-5 w-px bg-border/60 @lg/detail:block" />
         <Button
           asChild
           aria-label="Back to list"
@@ -378,13 +387,24 @@ function DetailTopbar({
   );
 }
 
-export function DetailSectionCards({ record }: { record: WorkspaceRecord }) {
+export function DetailSectionCards({
+  record,
+  solid = false,
+}: {
+  record: WorkspaceRecord;
+  solid?: boolean;
+}) {
   const visibleSections = getVisibleSections(record);
   return (
     <div className="space-y-2">
       {visibleSections.map((section) => (
         <details
-          className="group rounded-lg bg-muted/20 px-4 py-3"
+          className={cn(
+            "group rounded-lg px-4 py-3",
+            solid
+              ? "bg-[color-mix(in_oklab,var(--muted)_20%,var(--card))]"
+              : "bg-muted/20",
+          )}
           key={section.title}
           open
         >

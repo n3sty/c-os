@@ -140,3 +140,10 @@
     @apply font-sans;
   }
 }
+
+html.inbox-is-resizing,
+html.inbox-is-resizing * {
+  cursor: col-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}

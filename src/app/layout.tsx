@@ -1,25 +1,10 @@
 import type { Metadata } from "next";
-import {
-  Geist,
-  Geist_Mono,
-  Nunito_Sans,
-  Space_Grotesk,
-} from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const spaceGroteskHeading = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
-
-const nunitoSans = Nunito_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
@@ -47,8 +32,6 @@ export default function RootLayout({
         "antialiased",
         geistSans.variable,
         geistMono.variable,
-        nunitoSans.variable,
-        spaceGroteskHeading.variable,
       )}
     >
       <body className="min-h-full bg-background font-sans text-foreground">

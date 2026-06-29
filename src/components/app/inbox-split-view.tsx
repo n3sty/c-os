@@ -155,7 +155,7 @@ export function InboxSplitView({
 
   return (
     <div className="@container/inbox" ref={containerRef} style={splitViewStyle}>
-      <div className="relative isolate min-h-[calc(100svh-2rem)] overflow-hidden rounded-lg bg-card after:pointer-events-none after:absolute after:inset-0 after:z-[70] after:rounded-[inherit] after:ring-1 after:ring-black/80 after:ring-inset @[760px]/inbox:grid @[760px]/inbox:grid-cols-[var(--inbox-list-width)_minmax(480px,1fr)]">
+      <div className="relative isolate min-h-[calc(100svh-2rem)] overflow-hidden rounded-xl border border-border bg-card after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:z-[70] after:h-px after:bg-white/10 @[760px]/inbox:grid @[760px]/inbox:grid-cols-[var(--inbox-list-width)_minmax(480px,1fr)]">
         <section
           className={cn("min-w-0", detailOpen && "hidden @[760px]/inbox:block")}
         >

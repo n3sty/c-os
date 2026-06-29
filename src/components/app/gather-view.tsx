@@ -113,7 +113,7 @@ export function GatherView({
   );
 
   return (
-    <div className="grid min-h-[calc(100svh-2rem)] grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card">
+    <div className="grid min-h-[calc(100svh-2rem)] grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-card">
       {topbar}
 
       <div className="flex min-h-11 items-center justify-between gap-2 px-2 py-1.5 sm:px-3">
@@ -121,9 +121,9 @@ export function GatherView({
           {filters.map((filter) => (
             <button
               className={cn(
-                "inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground",
+                "inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
                 filter.label === activeView &&
-                  "bg-muted/50 font-medium text-foreground",
+                  "bg-secondary font-medium text-foreground",
               )}
               key={filter.label}
               onClick={() => setActiveView(filter.label)}
@@ -177,7 +177,7 @@ export function GatherView({
                 <div className="px-1 py-1">
                   {visibleRecords.map((record) => (
                     <div
-                      className="group grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-muted/25 sm:px-3"
+                      className="group grid min-h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent/70 sm:px-3"
                       key={record.id}
                     >
                       <Link
@@ -245,16 +245,16 @@ export function GatherView({
         </main>
 
         {sidebarOpen && (
-          <aside className="hidden min-h-0 p-2 pl-1.5 xl:block">
-            <div className="h-full overflow-auto rounded-lg bg-card/90 p-3 shadow-md ring-1 ring-white/10 dark:bg-muted/15 dark:ring-white/10">
-              <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1 rounded-full bg-muted/25 p-0.5">
+          <aside className="hidden min-h-0 border-border/60 border-l p-2 pl-1.5 xl:block">
+            <div className="h-full overflow-auto rounded-lg border border-border/70 bg-secondary p-3">
+              <div className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1 rounded-full bg-background p-0.5">
                 {visibleFilterGroups.map((group) => (
                   <button
                     className={cn(
                       "h-8 min-w-0 truncate rounded-full border-0 px-3 text-xs shadow-none transition-colors",
                       activeGroup?.title === group.title
-                        ? "bg-muted/60 text-foreground"
-                        : "bg-transparent text-muted-foreground hover:bg-muted/30",
+                        ? "bg-secondary text-foreground"
+                        : "bg-transparent text-muted-foreground hover:bg-accent",
                     )}
                     key={group.title}
                     onClick={() => setActiveGroupTitle(group.title)}
@@ -279,8 +279,8 @@ export function GatherView({
                     return (
                       <button
                         className={cn(
-                          "flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground",
-                          isActive && "bg-muted/25 font-medium text-foreground",
+                          "flex h-10 w-full items-center gap-3 rounded-md px-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                          isActive && "bg-accent font-medium text-foreground",
                         )}
                         key={option.label}
                         onClick={() => toggleGroupOption(option.label)}

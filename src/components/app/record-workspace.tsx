@@ -7,7 +7,7 @@ import {
   RiArrowUpLine,
 } from "@remixicon/react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import type { UpdateRecordTarget } from "@/app/actions/records";
 import { CreateEntityButton } from "@/components/app/create-entity-button";
 import {
@@ -257,10 +257,11 @@ export function DetailSurface({
   return (
     <div
       className={cn(
-        "@container/detail relative isolate grid min-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg bg-card",
+        "@container/detail relative isolate grid min-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-xl border border-border bg-card",
         variant === "page" &&
-          "after:pointer-events-none after:absolute after:inset-0 after:z-[70] after:rounded-[inherit] after:ring-1 after:ring-black/80 after:ring-inset",
-        variant === "panel" && "h-full min-h-0 rounded-none bg-transparent",
+          "after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:z-[70] after:h-px after:bg-white/10",
+        variant === "panel" &&
+          "h-full min-h-0 rounded-none border-0 bg-transparent",
       )}
     >
       <DetailTopbar
@@ -412,10 +413,8 @@ export function DetailSectionCards({
       {visibleSections.map((section) => (
         <details
           className={cn(
-            "group rounded-lg px-4 py-3",
-            solid
-              ? "bg-[color-mix(in_oklab,var(--muted)_20%,var(--card))]"
-              : "bg-muted/20",
+            "group rounded-lg border border-border/70 px-4 py-3",
+            solid ? "bg-secondary" : "bg-muted/20",
           )}
           key={section.title}
           open
@@ -487,7 +486,9 @@ export function GatherTopbar({
         <span className="sr-only">{description}</span>
       </div>
       {creationTarget && (
-        <CreateEntityButton basePath={basePath} target={creationTarget} />
+        <Suspense fallback={null}>
+          <CreateEntityButton basePath={basePath} target={creationTarget} />
+        </Suspense>
       )}
     </header>
   );

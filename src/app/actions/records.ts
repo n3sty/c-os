@@ -89,6 +89,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/proposals");
+      revalidatePath("/");
       return { ok: true };
     }
 
@@ -112,6 +113,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/invoices");
+      revalidatePath("/");
       return { ok: true };
     }
 
@@ -171,6 +173,7 @@ export async function setInvoiceStatusAction(
   }
 
   revalidatePath("/invoices");
+  revalidatePath("/");
   return { ok: true } satisfies ActionState;
 }
 
@@ -269,6 +272,7 @@ export async function updateRecordFieldAction(
       const result = await updateProposal(target.id, input);
       if (!result.ok) return { ok: false, message: result.message };
       revalidatePath("/proposals");
+      revalidatePath("/");
       return { ok: true };
     }
     case "invoice": {
@@ -288,6 +292,7 @@ export async function updateRecordFieldAction(
       const result = await updateInvoice(target.id, input);
       if (!result.ok) return { ok: false, message: result.message };
       revalidatePath("/invoices");
+      revalidatePath("/");
       return { ok: true };
     }
     case "expense": {
@@ -346,6 +351,7 @@ export async function updateRecordDescriptionAction(
       const result = await updateProposal(id, { description });
       if (!result.ok) return { ok: false, message: result.message };
       revalidatePath("/proposals");
+      revalidatePath("/");
       return { ok: true };
     }
     case "expense": {
@@ -355,4 +361,18 @@ export async function updateRecordDescriptionAction(
       return { ok: true };
     }
   }
+}
+
+export async function setInvoiceStatusFromQueueAction(
+  invoiceId: number,
+  status: Exclude<InvoiceStatus, "void">,
+): Promise<void> {
+  await setInvoiceStatusAction(invoiceId, status);
+}
+
+export async function updateRecordFieldFromQueueAction(
+  target: UpdateRecordTarget,
+  value: string,
+): Promise<void> {
+  await updateRecordFieldAction(target, value);
 }

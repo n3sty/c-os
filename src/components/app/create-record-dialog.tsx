@@ -11,6 +11,7 @@ import {
   RiPriceTag3Line,
   RiUser3Line,
 } from "@remixicon/react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FormEvent } from "react";
 import { useCallback, useMemo, useRef, useState, useTransition } from "react";
@@ -122,6 +123,10 @@ export function CreateRecordDialog() {
   const target = isCreationTarget(createValue) ? createValue : null;
   const [createMore, setCreateMore] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [createdRecord, setCreatedRecord] = useState<{
+    type: string;
+    id: number;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [isDirty, setIsDirty] = useState(false);
@@ -144,11 +149,16 @@ export function CreateRecordDialog() {
   function closeDialog() {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("create");
+    nextParams.delete("clientId");
+    nextParams.delete("proposalId");
+    nextParams.delete("status");
+    nextParams.delete("returnTo");
     const query = nextParams.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });
     setSubmitted(false);
+    setCreatedRecord(null);
     setErrorMessage(null);
     setIsDirty(false);
   }
@@ -190,10 +200,11 @@ export function CreateRecordDialog() {
       }
 
       setSubmitted(true);
+      setCreatedRecord(result.record ?? null);
       setIsDirty(false);
       router.refresh();
 
-      if (!shouldCreateMore) {
+      if (!shouldCreateMore && !searchParams.get("returnTo")) {
         window.setTimeout(closeDialog, 250);
         return;
       }
@@ -240,11 +251,23 @@ export function CreateRecordDialog() {
     },
   });
 
-  const metadataFields = config
-    ? config.fields.filter(
+  const resolvedConfig = useMemo(() => {
+    if (!config) return null;
+
+    return {
+      ...config,
+      fields: config.fields.map((field) => {
+        const value = searchParams.get(field.name);
+        return value ? { ...field, value } : field;
+      }),
+    };
+  }, [config, searchParams]);
+
+  const metadataFields = resolvedConfig
+    ? resolvedConfig.fields.filter(
         (f) =>
-          f !== getPrimaryField(config.fields) &&
-          f !== getSecondaryField(config.fields),
+          f !== getPrimaryField(resolvedConfig.fields) &&
+          f !== getSecondaryField(resolvedConfig.fields),
       )
     : [];
 
@@ -253,7 +276,7 @@ export function CreateRecordDialog() {
       open={Boolean(config)}
       onOpenChange={(open) => !open && !isDirty && closeDialog()}
     >
-      {config &&
+      {resolvedConfig &&
         metadataFields.map((field) => {
           const shortcutKey = FIELD_SHORTCUTS[field.name];
           if (!shortcutKey) return null;
@@ -267,7 +290,7 @@ export function CreateRecordDialog() {
             />
           );
         })}
-      {config && (
+      {resolvedConfig && (
         <DialogContent
           ref={dialogContentRef}
           className="top-[15vh] max-w-[calc(42rem*1.5)] sm:top-[15vh]"
@@ -287,17 +310,19 @@ export function CreateRecordDialog() {
                 </span>
                 <RiArrowRightSLine size={16} />
                 <span className="inline-flex h-7 items-center rounded-full bg-muted/40 px-2.5 font-medium">
-                  {config.title}
+                  {resolvedConfig.title}
                 </span>
               </header>
 
-              <DialogTitle className="sr-only">{config.title}</DialogTitle>
+              <DialogTitle className="sr-only">
+                {resolvedConfig.title}
+              </DialogTitle>
               <DialogDescription className="sr-only">
-                {config.description}
+                {resolvedConfig.description}
               </DialogDescription>
 
               <CreateRecordCanvas
-                fields={config.fields}
+                fields={resolvedConfig.fields}
                 onPopupOpenChange={handlePopupOpenChange}
                 registerFieldHandle={registerFieldHandle}
               />
@@ -318,9 +343,25 @@ export function CreateRecordDialog() {
 
               <div className="flex items-center justify-end gap-2">
                 {submitted && (
-                  <span className="inline-flex items-center gap-1.5 text-muted-foreground text-sm">
+                  <span className="inline-flex flex-wrap items-center gap-1.5 text-muted-foreground text-sm">
                     <RiCheckboxCircleLine size={16} />
                     Saved
+                    {createdRecord && (
+                      <Link
+                        className="font-medium text-foreground underline-offset-4 hover:underline"
+                        href={`/${createdRecord.type}s?record=${createdRecord.id}`}
+                      >
+                        Open record
+                      </Link>
+                    )}
+                    {searchParams.get("returnTo") && (
+                      <Link
+                        className="font-medium text-foreground underline-offset-4 hover:underline"
+                        href={searchParams.get("returnTo") ?? pathname}
+                      >
+                        Return to workflow
+                      </Link>
+                    )}
                   </span>
                 )}
                 {errorMessage && (
@@ -345,7 +386,7 @@ export function CreateRecordDialog() {
                       type="submit"
                     >
                       <RiAddLine />
-                      {isPending ? "Saving..." : config.submitLabel}
+                      {isPending ? "Saving..." : resolvedConfig.submitLabel}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent
@@ -357,7 +398,9 @@ export function CreateRecordDialog() {
                   >
                     <KeyboardShortcutInstructions
                       className="gap-1.5"
-                      shortcuts={[...getCreateShortcutInstructions(config)]}
+                      shortcuts={[
+                        ...getCreateShortcutInstructions(resolvedConfig),
+                      ]}
                     />
                   </TooltipContent>
                 </Tooltip>

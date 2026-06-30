@@ -24,6 +24,7 @@ import { parseMoney } from "@/lib/money";
 type ActionState = {
   ok: boolean;
   message?: string;
+  record?: { type: "client" | "proposal" | "invoice" | "expense"; id: number };
 };
 
 function asString(value: FormDataEntryValue | null) {
@@ -37,6 +38,8 @@ function asOptionalString(value: FormDataEntryValue | null) {
 
 function asNumber(value: FormDataEntryValue | null) {
   const normalized = asString(value);
+  if (!normalized) return null;
+
   const parsed = Number(normalized);
 
   return Number.isFinite(parsed) ? parsed : null;
@@ -59,7 +62,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/clients");
-      return { ok: true };
+      return { ok: true, record: { type: "client", id: result.data.id } };
     }
 
     case "proposal": {
@@ -89,7 +92,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/proposals");
-      return { ok: true };
+      return { ok: true, record: { type: "proposal", id: result.data.id } };
     }
 
     case "invoice": {
@@ -99,8 +102,11 @@ export async function createRecordAction(
         return { ok: false, message: "Client is required." };
       }
 
+      const proposalId = asNumber(formData.get("proposalId"));
+
       const result = await createInvoice({
         clientId,
+        proposalId,
         documentLink: asOptionalString(formData.get("documentLink")),
         invoiceNumber:
           asOptionalString(formData.get("invoiceNumber")) ?? undefined,
@@ -112,7 +118,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/invoices");
-      return { ok: true };
+      return { ok: true, record: { type: "invoice", id: result.data.id } };
     }
 
     case "expense": {
@@ -155,7 +161,7 @@ export async function createRecordAction(
       }
 
       revalidatePath("/expenses");
-      return { ok: true };
+      return { ok: true, record: { type: "expense", id: result.data.id } };
     }
   }
 }

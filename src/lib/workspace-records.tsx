@@ -5,6 +5,7 @@ import {
   RiReceiptLine,
   RiUser3Line,
 } from "@remixicon/react";
+import Link from "next/link";
 import { ArchiveRecordButton } from "@/components/app/archive-record-button";
 import { InvoiceStatusPicker } from "@/components/app/invoice-status-controls";
 import {
@@ -61,6 +62,50 @@ type WorkspaceEntityContext = {
   record: WorkspaceRecord | null;
 };
 
+type WorkflowAction = {
+  label: string;
+  href: string;
+  tone?: "primary" | "muted";
+};
+
+function WorkflowPanel({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description: string;
+  actions: WorkflowAction[];
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border/70 bg-muted/15 p-4">
+      <div>
+        <p className="font-heading text-sm font-semibold text-foreground">
+          {title}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {actions.map((action) => (
+          <Link
+            className={
+              action.tone === "primary"
+                ? "inline-flex h-8 items-center rounded-md bg-primary px-3 text-primary-foreground text-sm font-medium hover:bg-[#828fff]"
+                : "inline-flex h-8 items-center rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-accent"
+            }
+            href={action.href}
+            key={action.href}
+          >
+            {action.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function getYearFromNumber(value: string) {
   return value.match(/\d{4}/)?.[0] ?? "Unknown year";
 }
@@ -113,8 +158,35 @@ function buildClientRecords(snapshot: WorkspaceSnapshot) {
         `${linkedInvoices.length} invoices`,
       ],
       detailTitle: client.fullName,
-      detailDescription:
-        "Client profile, contact route, and linked commercial records.",
+      detailDescription: (
+        <WorkflowPanel
+          title="Lead won: confirm the commercial path"
+          description="Use this client as the recovery point after a won lead. Link existing records first to avoid duplicates, then create only the missing proposal or invoice."
+          actions={[
+            {
+              label:
+                linkedProposals.length > 0 ? "Open proposal" : "Draft proposal",
+              href:
+                linkedProposals.length > 0
+                  ? `/proposals?record=${linkedProposals[0].id}`
+                  : `/clients?record=${client.id}&create=proposal&clientId=${client.id}&status=draft&returnTo=${encodeURIComponent(`/clients?record=${client.id}`)}`,
+              tone: "primary",
+            },
+            {
+              label:
+                linkedInvoices.length > 0 ? "Open invoice" : "Create invoice",
+              href:
+                linkedInvoices.length > 0
+                  ? `/invoices?record=${linkedInvoices[0].id}`
+                  : `/clients?record=${client.id}&create=invoice&clientId=${client.id}&returnTo=${encodeURIComponent(`/clients?record=${client.id}`)}`,
+            },
+            {
+              label: "Create follow-up task",
+              href: `/clients?record=${client.id}`,
+            },
+          ]}
+        />
+      ),
       detailSections: [
         {
           title: "Properties",
@@ -260,7 +332,46 @@ function buildProposalRecords(snapshot: WorkspaceSnapshot) {
         />,
       ],
       detailTitle: proposal.title,
-      detailDescription: proposal.description ?? "",
+      detailDescription: (
+        <div className="space-y-4">
+          {proposal.description ? <p>{proposal.description}</p> : null}
+          <WorkflowPanel
+            title={
+              proposal.status === "accepted"
+                ? "Proposal accepted: finish handoff"
+                : "Proposal workflow"
+            }
+            description={
+              linkedInvoices.length > 0
+                ? "An invoice is already linked. Continue from the existing record instead of creating a duplicate."
+                : proposal.status === "accepted"
+                  ? "Confirm the client/project handoff, then create the invoice with this proposal already linked."
+                  : "Keep the proposal moving. When it is accepted, the same workflow can create the linked invoice."
+            }
+            actions={[
+              {
+                label: "Open client",
+                href: client ? `/clients?record=${client.id}` : "/clients",
+              },
+              {
+                label:
+                  linkedInvoices.length > 0
+                    ? "Open linked invoice"
+                    : "Create linked invoice",
+                href:
+                  linkedInvoices.length > 0
+                    ? `/invoices?record=${linkedInvoices[0].id}`
+                    : `/proposals?record=${proposal.id}&create=invoice&clientId=${proposal.clientId}&proposalId=${proposal.id}&returnTo=${encodeURIComponent(`/proposals?record=${proposal.id}`)}`,
+                tone: proposal.status === "accepted" ? "primary" : "muted",
+              },
+              {
+                label: "Create follow-up task",
+                href: `/proposals?record=${proposal.id}`,
+              },
+            ]}
+          />
+        </div>
+      ),
       descriptionSaveTarget: { entityType: "proposal", id: proposal.id },
       detailSections: [
         {
@@ -443,8 +554,25 @@ function buildInvoiceRecords(snapshot: WorkspaceSnapshot) {
         />,
       ],
       detailTitle: invoice.invoiceNumber,
-      detailDescription:
-        "Invoice lifecycle, document state, payment status, and commercial links.",
+      detailDescription: (
+        <WorkflowPanel
+          title="Invoice created"
+          description="This invoice keeps its client and proposal context. Use the links below to return to the originating workflow or relink the invoice if it was created after skipping a step."
+          actions={[
+            {
+              label: "Open client",
+              href: client ? `/clients?record=${client.id}` : "/clients",
+            },
+            {
+              label: proposal ? "Return to proposal" : "Link a proposal",
+              href: proposal
+                ? `/proposals?record=${proposal.id}`
+                : `/invoices?record=${invoice.id}`,
+              tone: proposal ? "primary" : "muted",
+            },
+          ]}
+        />
+      ),
       detailSections: [
         {
           title: "Properties",

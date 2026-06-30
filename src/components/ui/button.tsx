@@ -19,6 +19,13 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         pill: "h-5 gap-1 rounded-full bg-muted/40 px-1.5 text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+        urgent:
+          "border border-red-500/30 bg-red-500/15 text-red-100 hover:bg-red-500/25",
+        waiting:
+          "border border-amber-500/30 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25",
+        followup:
+          "border border-blue-500/30 bg-blue-500/15 text-blue-100 hover:bg-blue-500/25",
+        task: "border border-border bg-secondary text-secondary-foreground hover:bg-accent",
       },
       size: {
         default: "h-9 px-4 py-2",
